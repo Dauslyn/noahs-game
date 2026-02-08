@@ -25,7 +25,17 @@ Full design document: `docs/plans/2026-02-08-game-design.md`
 - Assets in `/assets` directory with subdirectories by type
 
 ## Current Phase
-**Phase 1: Playable Prototype** - See design doc for full build order.
+**Phase 1: COMPLETE** - Playable prototype with ECS, physics, combat, enemies, death/respawn, effects, HUD.
+**Next: Phase 2: Core Loop** - Ship view, multiple planets, mech loadout, inventory, trading, death loop.
+
+See `docs/plans/2026-02-08-game-design.md` for full roadmap, `docs/plans/2026-02-08-phase1-completion.md` for what was built.
+
+## Architecture Details
+- 13 systems running in priority order (lower = first): Starfield(-10) → Physics(0) → EnemyAI(15) → PlayerMovement(16) → ... → Render(100)
+- 47 TypeScript source files across core, components, systems, entities, input, level, audio, ui
+- All visuals are procedural PixiJS Graphics (no sprite assets yet)
+- EntityManager handles deferred entity destruction (prevents mid-iteration issues)
+- `inputManager.update()` MUST be called AFTER systems loop in game.ts (clears per-frame input state)
 
 ## Project Rules
 

@@ -219,20 +219,21 @@ Equipping compatible components triggers synergy discovery.
 
 ## 7. Build Order
 
-### Phase 1: Playable Prototype
-- [ ] Project setup (Vite + TypeScript + PixiJS + Rapier2D)
-- [ ] Single planet level with platforming (run, jump, wall-jump)
-- [ ] Player character with basic movement and animation
-- [ ] Mech companion that follows the player
-- [ ] Mech auto-attacks with one weapon (laser)
-- [ ] A few enemy types that can hurt you
-- [ ] Death and respawn
-- [ ] Basic tilemap level built in LDtk
-- [ ] Starfield background (procedural)
-- [ ] Glow/bloom shader effects on mech and lasers
-- [ ] Sound effects (jump, laser, hit, death)
+### Phase 1: Playable Prototype ✅ COMPLETE (2026-02-08)
+- [x] Project setup (Vite + TypeScript + PixiJS + Rapier2D)
+- [x] Single planet level with platforming (run, jump, wall-jump)
+- [x] Player character with basic movement and animation
+- [x] Mech companion that follows the player
+- [x] Mech auto-attacks with one weapon (laser)
+- [x] A few enemy types that can hurt you (walker, flyer, turret)
+- [x] Death and respawn
+- [ ] Basic tilemap level built in LDtk *(deferred — using procedural level builder for now)*
+- [x] Starfield background (procedural)
+- [x] Glow/bloom shader effects on mech and lasers
+- [x] Sound effects (jump, laser, hit, death) *(SoundManager ready, user needs to generate .wav files via sfxr.me)*
 
 **Gate: Phase 1 must be fun before moving on.**
+**Status:** Core prototype works. Procedural sci-fi visuals in place. LDtk integration deferred to Phase 2. Sound files not yet generated.
 
 ### Phase 2: Core Loop
 - [ ] Ship view (universe map, planet selection)
