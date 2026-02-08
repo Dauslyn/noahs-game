@@ -11,6 +11,7 @@ import { Application, Container } from 'pixi.js';
 import type { System } from './types.js';
 import { World } from './world.js';
 import { PhysicsContext } from './physics.js';
+import { EntityManager } from './entity-manager.js';
 import { SCREEN_WIDTH, SCREEN_HEIGHT } from './constants.js';
 import { InputManager } from '../input/input-manager.js';
 import { PhysicsSystem } from '../systems/physics-system.js';
@@ -44,6 +45,7 @@ export class Game {
   private app!: Application;
   private world!: World;
   private physicsCtx!: PhysicsContext;
+  private entityManager!: EntityManager;
   private systems: System[] = [];
   private inputManager!: InputManager;
 
@@ -95,6 +97,9 @@ export class Game {
 
     // 4c. Apply subtle bloom to the world container for sci-fi atmosphere
     this.worldContainer.filters = [createWorldBloom()];
+
+    // 4d. Centralised entity destruction manager
+    this.entityManager = new EntityManager(this.physicsCtx, this.worldContainer);
 
     // 5. Input
     this.inputManager = new InputManager();
@@ -154,8 +159,8 @@ export class Game {
     this.addSystem(new PlayerMovementSystem(this.physicsCtx, this.inputManager, soundManager));
     this.addSystem(new MechFollowSystem());
     this.addSystem(new WeaponSystem(this.physicsCtx, this.worldContainer, soundManager));
-    this.addSystem(new ProjectileSystem(this.physicsCtx, this.worldContainer));
-    this.addSystem(new DamageSystem(this.physicsCtx, this.worldContainer, soundManager));
+    this.addSystem(new ProjectileSystem(this.entityManager));
+    this.addSystem(new DamageSystem(this.physicsCtx, soundManager, this.entityManager));
     this.addSystem(new DeathRespawnSystem(
       this.physicsCtx,
       this.worldContainer,
@@ -172,6 +177,11 @@ export class Game {
     this.app.ticker.add((ticker) => {
       // Cap dt to prevent physics explosion after tab-away
       const dt = Math.min(ticker.deltaMS / 1000, 0.1);
+
+      // Process deferred entity destruction BEFORE systems run
+      // to avoid stale references during iteration
+      this.entityManager.processDestroyQueue(this.world);
+
       this.inputManager.update();
 
       for (const system of this.systems) {

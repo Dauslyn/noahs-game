@@ -1,18 +1,20 @@
 /**
- * DamageSystem – handles contact damage, invincibility timers,
- * knockback impulses, and enemy death/destruction.
+ * DamageSystem -- handles contact damage, invincibility timers,
+ * knockback impulses, and enemy death marking.
  *
  * Priority 40: runs after ProjectileSystem (35) so projectile hits
  * are already applied, but before RenderSystem (100).
+ *
+ * Entity destruction is delegated to the centralised EntityManager,
+ * which processes the destroy queue at the start of each frame.
  */
 
-import type { System, Entity } from '../core/types.js';
+import type { System } from '../core/types.js';
 import type { World } from '../core/world.js';
 import type { PhysicsContext } from '../core/physics.js';
-import type { Container } from 'pixi.js';
-import { unregisterCollider } from '../core/collision-utils.js';
 import { INVINCIBILITY_DURATION } from '../core/constants.js';
 import type { SoundManager } from '../audio/sound-manager.js';
+import type { EntityManager } from '../core/entity-manager.js';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -35,36 +37,34 @@ export class DamageSystem implements System {
   readonly priority = 40;
 
   private readonly physicsCtx: PhysicsContext;
-  private readonly worldContainer: Container;
   private readonly soundManager: SoundManager;
-
-  /** Queue of enemy entities to destroy at end of frame. */
-  private destroyQueue: Entity[] = [];
+  private readonly entityManager: EntityManager;
 
   /**
-   * @param physicsCtx     - shared physics context for body removal / impulse
-   * @param worldContainer - PixiJS container for display object cleanup
+   * @param physicsCtx     - shared physics context for knockback impulses
    * @param soundManager   - audio manager for hit/death sounds
+   * @param entityManager  - centralised manager for deferred entity destruction
    */
-  constructor(physicsCtx: PhysicsContext, worldContainer: Container, soundManager: SoundManager) {
+  constructor(
+    physicsCtx: PhysicsContext,
+    soundManager: SoundManager,
+    entityManager: EntityManager,
+  ) {
     this.physicsCtx = physicsCtx;
-    this.worldContainer = worldContainer;
     this.soundManager = soundManager;
+    this.entityManager = entityManager;
   }
 
   /**
    * Each frame:
    * 1. Decrement invincibility timers on all entities with health.
    * 2. Check contact damage between enemies and the player.
-   * 3. Destroy dead enemies (deferred from this frame or previous).
+   * 3. Queue dead enemies for destruction via EntityManager.
    *
    * @param world - the ECS world to query / mutate
    * @param dt    - elapsed time since last frame (seconds)
    */
   update(world: World, dt: number): void {
-    // 0. Process destroy queue from previous frame
-    this.processDestroyQueue(world);
-
     // 1. Update invincibility timers for all entities with health
     this.updateInvincibilityTimers(world, dt);
 
@@ -193,7 +193,11 @@ export class DamageSystem implements System {
   // Enemy death
   // -----------------------------------------------------------------------
 
-  /** Find dead enemies and add them to the destroy queue. */
+  /**
+   * Find dead enemies and queue them for destruction via EntityManager.
+   * The EntityManager will handle physics/display/ECS cleanup at the
+   * start of the next frame.
+   */
   private queueDeadEnemies(world: World): void {
     const enemies = world.query('enemy', 'health');
 
@@ -202,44 +206,9 @@ export class DamageSystem implements System {
       if (!health) continue;
 
       if (health.isDead) {
-        this.destroyQueue.push(entity);
+        this.entityManager.markForDestruction(entity);
         this.soundManager.play('enemy-death');
       }
     }
-  }
-
-  /**
-   * Remove all queued entities: physics bodies, display objects, and
-   * ECS entity/component data.
-   */
-  private processDestroyQueue(world: World): void {
-    for (const entity of this.destroyQueue) {
-      // Skip if already removed (e.g. double-queued)
-      if (!world.hasEntity(entity)) continue;
-
-      // Remove physics body and unregister its colliders
-      const pb = world.getComponent(entity, 'physicsBody');
-      if (pb) {
-        const body = this.physicsCtx.world.getRigidBody(pb.bodyHandle);
-        if (body) {
-          for (let i = 0; i < body.numColliders(); i++) {
-            const collider = body.collider(i);
-            unregisterCollider(this.physicsCtx, collider.handle);
-          }
-          this.physicsCtx.world.removeRigidBody(body);
-        }
-      }
-
-      // Remove display object from the world container
-      const sprite = world.getComponent(entity, 'sprite');
-      if (sprite && sprite.displayObject.parent) {
-        this.worldContainer.removeChild(sprite.displayObject);
-      }
-
-      // Remove the entity and all its components from the ECS world
-      world.removeEntity(entity);
-    }
-
-    this.destroyQueue = [];
   }
 }
