@@ -17,9 +17,13 @@ import { PhysicsSystem } from '../systems/physics-system.js';
 import { PlayerMovementSystem } from '../systems/player-movement-system.js';
 import { CameraSystem } from '../systems/camera-system.js';
 import { RenderSystem } from '../systems/render-system.js';
+import { MechFollowSystem } from '../systems/mech-follow-system.js';
+import { WeaponSystem } from '../systems/weapon-system.js';
+import { ProjectileSystem } from '../systems/projectile-system.js';
 import { PROTOTYPE_LEVEL } from '../level/level-data.js';
 import { buildLevel } from '../level/level-builder.js';
 import { createPlayerEntity } from '../entities/create-player.js';
+import { createMechEntity } from '../entities/create-mech.js';
 
 /** Dark blue background color for the space theme. */
 const BACKGROUND_COLOR = 0x0a0a2e;
@@ -82,10 +86,19 @@ export class Game {
     buildLevel(levelData, this.world, this.physicsCtx, this.worldContainer);
 
     // 7. Create player at the level's spawn point
-    createPlayerEntity(
+    const playerEntity = createPlayerEntity(
       this.world,
       this.physicsCtx,
       this.worldContainer,
+      levelData.playerSpawn.x,
+      levelData.playerSpawn.y,
+    );
+
+    // 7b. Create mech companion orbiting the player
+    createMechEntity(
+      this.world,
+      this.worldContainer,
+      playerEntity,
       levelData.playerSpawn.x,
       levelData.playerSpawn.y,
     );
@@ -100,6 +113,9 @@ export class Game {
 
     this.addSystem(new PhysicsSystem(this.physicsCtx));
     this.addSystem(new PlayerMovementSystem(this.physicsCtx, this.inputManager));
+    this.addSystem(new MechFollowSystem());
+    this.addSystem(new WeaponSystem(this.physicsCtx, this.worldContainer));
+    this.addSystem(new ProjectileSystem(this.physicsCtx, this.worldContainer));
     this.addSystem(new CameraSystem(this.worldContainer, levelBounds));
     this.addSystem(new RenderSystem(this.worldContainer));
 
