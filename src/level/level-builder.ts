@@ -26,14 +26,23 @@ import type { LevelData, PlatformDef } from './level-data.js';
 // Default colours
 // ---------------------------------------------------------------------------
 
-/** Default platform fill colour (dark gray-blue). */
-const DEFAULT_FILL = 0x333344;
+/** Default platform fill colour (dark metallic blue). */
+const DEFAULT_FILL = 0x1a2a3a;
 
-/** Platform outline colour (lighter gray-blue). */
-const OUTLINE_COLOR = 0x555566;
+/** Platform surface highlight colour (lighter top edge). */
+const SURFACE_COLOR = 0x3a5a7a;
+
+/** Platform outline colour (subtle border). */
+const OUTLINE_COLOR = 0x4a6a8a;
 
 /** Outline thickness in pixels. */
-const OUTLINE_WIDTH = 2;
+const OUTLINE_WIDTH = 1;
+
+/** Panel line colour for surface detail. */
+const PANEL_LINE_COLOR = 0x2a3a4a;
+
+/** Panel line spacing in pixels. */
+const PANEL_SPACING = 24;
 
 // ---------------------------------------------------------------------------
 // Builder
@@ -99,12 +108,51 @@ function buildPlatform(
   world.addComponent(entity, createTransform(def.x, def.y));
   world.addComponent(entity, createPhysicsBody(body.handle, 'static'));
 
-  // -- Visual: filled rectangle with outline, anchored at centre --
+  // -- Sci-fi platform visual with surface detail --
   const fillColor = def.color ?? DEFAULT_FILL;
+  const hw = def.width / 2;
+  const hh = def.height / 2;
   const gfx = new Graphics();
-  gfx.rect(-def.width / 2, -def.height / 2, def.width, def.height);
+
+  // Main body: dark metallic fill
+  gfx.rect(-hw, -hh, def.width, def.height);
   gfx.fill(fillColor);
+
+  // Top surface highlight: bright strip along the top edge
+  gfx.rect(-hw, -hh, def.width, 3);
+  gfx.fill(SURFACE_COLOR);
+
+  // Bottom edge shadow: darker strip
+  gfx.rect(-hw, hh - 2, def.width, 2);
+  gfx.fill(0x0a1520);
+
+  // Vertical panel lines: evenly spaced across the surface
+  const panelCount = Math.floor(def.width / PANEL_SPACING);
+  for (let i = 1; i < panelCount; i++) {
+    const px = -hw + i * PANEL_SPACING;
+    gfx.moveTo(px, -hh + 3);
+    gfx.lineTo(px, hh - 2);
+    gfx.stroke({ width: 1, color: PANEL_LINE_COLOR });
+  }
+
+  // Corner rivets: small dots at platform corners
+  if (def.width >= 40 && def.height >= 16) {
+    const rivetInset = 4;
+    const rivetColor = 0x5a7a9a;
+    gfx.circle(-hw + rivetInset, -hh + rivetInset, 1.5);
+    gfx.fill(rivetColor);
+    gfx.circle(hw - rivetInset, -hh + rivetInset, 1.5);
+    gfx.fill(rivetColor);
+    gfx.circle(-hw + rivetInset, hh - rivetInset, 1.5);
+    gfx.fill(rivetColor);
+    gfx.circle(hw - rivetInset, hh - rivetInset, 1.5);
+    gfx.fill(rivetColor);
+  }
+
+  // Outer border
+  gfx.rect(-hw, -hh, def.width, def.height);
   gfx.stroke({ color: OUTLINE_COLOR, width: OUTLINE_WIDTH });
+
   worldContainer.addChild(gfx);
 
   world.addComponent(entity, createSprite(gfx, def.width, def.height));

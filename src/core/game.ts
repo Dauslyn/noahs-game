@@ -182,11 +182,12 @@ export class Game {
       // to avoid stale references during iteration
       this.entityManager.processDestroyQueue(this.world);
 
-      this.inputManager.update();
-
       for (const system of this.systems) {
         system.update(this.world, dt);
       }
+
+      // Clear per-frame input state AFTER systems have read it
+      this.inputManager.update();
     });
 
     console.log(

@@ -66,15 +66,38 @@ export function createMechEntity(
     createWeapon(LASER_DAMAGE, LASER_FIRE_RATE, LASER_RANGE, LASER_SPEED),
   );
 
-  // -- Placeholder sprite: cyan diamond (16x16) --
+  // -- Sci-fi drone sprite (procedural) --
   const half = DIAMOND_SIZE / 2;
   const gfx = new Graphics();
-  gfx.moveTo(0, -half);
-  gfx.lineTo(half, 0);
-  gfx.lineTo(0, half);
-  gfx.lineTo(-half, 0);
+
+  // Outer shell: diamond shape with metallic look
+  gfx.moveTo(0, -half - 2);
+  gfx.lineTo(half + 2, 0);
+  gfx.lineTo(0, half + 2);
+  gfx.lineTo(-half - 2, 0);
   gfx.closePath();
-  gfx.fill(0x00ffcc);
+  gfx.fill(0x115566);
+
+  // Inner core: smaller diamond, brighter
+  gfx.moveTo(0, -half + 2);
+  gfx.lineTo(half - 2, 0);
+  gfx.lineTo(0, half - 2);
+  gfx.lineTo(-half + 2, 0);
+  gfx.closePath();
+  gfx.fill(0x00ddcc);
+
+  // Centre eye: small bright dot
+  gfx.circle(0, 0, 2);
+  gfx.fill(0xffffff);
+
+  // Wing accents: tiny lines
+  gfx.moveTo(-half - 2, 0);
+  gfx.lineTo(-half - 5, -2);
+  gfx.stroke({ width: 1, color: 0x00ffff });
+  gfx.moveTo(half + 2, 0);
+  gfx.lineTo(half + 5, -2);
+  gfx.stroke({ width: 1, color: 0x00ffff });
+
   worldContainer.addChild(gfx);
 
   world.addComponent(

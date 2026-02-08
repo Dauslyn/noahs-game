@@ -92,12 +92,22 @@ export function createProjectileEntity(
     createProjectile(damage, ownerEntity, DEFAULT_LIFETIME, speed),
   );
 
-  // -- Placeholder sprite: thin bright yellow line --
+  // -- Sci-fi laser bolt sprite --
   const gfx = new Graphics();
-  gfx.rect(-BOLT_WIDTH / 2, -BOLT_HEIGHT / 2, BOLT_WIDTH, BOLT_HEIGHT);
-  gfx.fill(0xffff44);
 
-  // Rotate sprite to match velocity direction: atan2(vy, vx)
+  // Outer glow trail (wider, dimmer)
+  gfx.rect(-BOLT_WIDTH / 2 - 2, -BOLT_HEIGHT, BOLT_WIDTH + 4, BOLT_HEIGHT * 2);
+  gfx.fill({ color: 0xffff00, alpha: 0.3 });
+
+  // Core beam (bright white-yellow)
+  gfx.rect(-BOLT_WIDTH / 2, -BOLT_HEIGHT / 2, BOLT_WIDTH, BOLT_HEIGHT);
+  gfx.fill(0xffffcc);
+
+  // Hot centre line
+  gfx.rect(-BOLT_WIDTH / 2 + 1, -0.5, BOLT_WIDTH - 2, 1);
+  gfx.fill(0xffffff);
+
+  // Rotate to match velocity direction: atan2(vy, vx)
   gfx.rotation = Math.atan2(vy, vx);
   worldContainer.addChild(gfx);
 

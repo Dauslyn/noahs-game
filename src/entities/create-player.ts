@@ -84,15 +84,39 @@ export function createPlayerEntity(
   world.addComponent(entity, createPlayer());
   world.addComponent(entity, createHealth(PLAYER_MAX_HEALTH));
 
-  // -- Placeholder sprite (blue rectangle, anchor at centre) --
+  // -- Sci-fi character sprite (procedural) --
   const gfx = new Graphics();
-  gfx.rect(
-    -SPRITE_WIDTH / 2,
-    -SPRITE_HEIGHT / 2,
-    SPRITE_WIDTH,
-    SPRITE_HEIGHT,
-  );
-  gfx.fill(0x4488ff);
+  const hw = SPRITE_WIDTH / 2;
+  const hh = SPRITE_HEIGHT / 2;
+
+  // Body armour: rounded rectangle with layered fills
+  gfx.roundRect(-hw, -hh + 6, SPRITE_WIDTH, SPRITE_HEIGHT - 6, 3);
+  gfx.fill(0x1a3a6e);
+  gfx.roundRect(-hw + 2, -hh + 8, SPRITE_WIDTH - 4, SPRITE_HEIGHT - 10, 2);
+  gfx.fill(0x2255aa);
+
+  // Chest stripe (accent)
+  gfx.rect(-hw + 4, -hh + 14, SPRITE_WIDTH - 8, 3);
+  gfx.fill(0x44ccff);
+
+  // Helmet: rounded shape on top
+  gfx.roundRect(-hw + 2, -hh, SPRITE_WIDTH - 4, 14, 5);
+  gfx.fill(0x3366cc);
+
+  // Visor: glowing cyan slit
+  gfx.roundRect(-hw + 5, -hh + 4, SPRITE_WIDTH - 10, 5, 2);
+  gfx.fill(0x00eeff);
+
+  // Belt line
+  gfx.rect(-hw, hh - 10, SPRITE_WIDTH, 2);
+  gfx.fill(0x557799);
+
+  // Boots
+  gfx.rect(-hw, hh - 6, 8, 6);
+  gfx.fill(0x112244);
+  gfx.rect(hw - 8, hh - 6, 8, 6);
+  gfx.fill(0x112244);
+
   worldContainer.addChild(gfx);
 
   world.addComponent(entity, createSprite(gfx, SPRITE_WIDTH, SPRITE_HEIGHT));
