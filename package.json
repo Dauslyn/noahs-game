@@ -1,0 +1,23 @@
+{
+  "name": "noahs-game",
+  "version": "0.1.0",
+  "description": "A 2D sci-fi space platformer with roguelite progression",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "pixi.js": "^8.16.0",
+    "@dimforge/rapier2d-compat": "^0.19.3",
+    "howler": "^2.2.4",
+    "pixi-filters": "^6.0.0",
+    "simplex-noise": "^4.0.3"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.0",
+    "@types/howler": "^2.2.11",
+    "vite": "^7.3.0"
+  }
+}
