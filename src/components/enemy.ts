@@ -22,6 +22,10 @@ export interface EnemyComponent extends Component {
   enemyType: EnemyType;
   /** Current horizontal patrol direction. */
   patrolDirection: PatrolDirection;
+  /** Maximum patrol distance from origin before reversing (pixels). */
+  patrolDistance: number;
+  /** X coordinate where the enemy was spawned (pixels). Used as patrol centre. */
+  patrolOriginX: number;
   /** Damage dealt on contact with the player. */
   contactDamage: number;
   /** Distance at which the enemy notices the player (pixels). */
@@ -35,16 +39,22 @@ export interface EnemyComponent extends Component {
  * @param enemyType      – walker / flyer / turret
  * @param contactDamage  – damage on touch
  * @param detectionRange – aggro radius in pixels
+ * @param patrolDistance  – max patrol range from origin (pixels, default 100)
+ * @param patrolOriginX  – spawn X used as patrol centre (pixels, default 0)
  */
 export function createEnemy(
   enemyType: EnemyType,
   contactDamage: number,
   detectionRange: number,
+  patrolDistance = 100,
+  patrolOriginX = 0,
 ): EnemyComponent {
   return {
     type: 'enemy',
     enemyType,
     patrolDirection: 1,
+    patrolDistance,
+    patrolOriginX,
     contactDamage,
     detectionRange,
     state: 'patrolling',

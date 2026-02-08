@@ -20,10 +20,17 @@ import { RenderSystem } from '../systems/render-system.js';
 import { MechFollowSystem } from '../systems/mech-follow-system.js';
 import { WeaponSystem } from '../systems/weapon-system.js';
 import { ProjectileSystem } from '../systems/projectile-system.js';
+import { EnemyAISystem } from '../systems/enemy-ai-system.js';
+import { DamageSystem } from '../systems/damage-system.js';
 import { PROTOTYPE_LEVEL } from '../level/level-data.js';
 import { buildLevel } from '../level/level-builder.js';
 import { createPlayerEntity } from '../entities/create-player.js';
 import { createMechEntity } from '../entities/create-mech.js';
+import {
+  createWalkerEnemy,
+  createFlyerEnemy,
+  createTurretEnemy,
+} from '../entities/create-enemy.js';
 
 /** Dark blue background color for the space theme. */
 const BACKGROUND_COLOR = 0x0a0a2e;
@@ -103,6 +110,21 @@ export class Game {
       levelData.playerSpawn.y,
     );
 
+    // 7c. Spawn enemies at level spawn points
+    for (const sp of levelData.spawnPoints) {
+      switch (sp.type) {
+        case 'enemy-walker':
+          createWalkerEnemy(this.world, this.physicsCtx, this.worldContainer, sp.x, sp.y);
+          break;
+        case 'enemy-flyer':
+          createFlyerEnemy(this.world, this.physicsCtx, this.worldContainer, sp.x, sp.y);
+          break;
+        case 'enemy-turret':
+          createTurretEnemy(this.world, this.physicsCtx, this.worldContainer, sp.x, sp.y);
+          break;
+      }
+    }
+
     // 8. Register systems (sorted by priority after each add)
     const levelBounds = {
       x: 0,
@@ -112,10 +134,12 @@ export class Game {
     };
 
     this.addSystem(new PhysicsSystem(this.physicsCtx));
+    this.addSystem(new EnemyAISystem(this.physicsCtx, this.worldContainer));
     this.addSystem(new PlayerMovementSystem(this.physicsCtx, this.inputManager));
     this.addSystem(new MechFollowSystem());
     this.addSystem(new WeaponSystem(this.physicsCtx, this.worldContainer));
     this.addSystem(new ProjectileSystem(this.physicsCtx, this.worldContainer));
+    this.addSystem(new DamageSystem(this.physicsCtx, this.worldContainer));
     this.addSystem(new CameraSystem(this.worldContainer, levelBounds));
     this.addSystem(new RenderSystem(this.worldContainer));
 
