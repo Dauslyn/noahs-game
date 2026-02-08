@@ -18,6 +18,7 @@ import {
   WALL_JUMP_IMPULSE_X, WALL_JUMP_IMPULSE_Y, WALL_SLIDE_SPEED,
 } from '../core/constants.js';
 import type { PlayerComponent } from '../components/index.js';
+import type { SoundManager } from '../audio/sound-manager.js';
 
 // Capsule geometry (metres) -- must match create-player.ts
 const CAPSULE_HALF_HEIGHT = 0.4;
@@ -35,10 +36,12 @@ export class PlayerMovementSystem implements System {
 
   private readonly physics: PhysicsContext;
   private readonly input: InputManager;
+  private readonly soundManager: SoundManager;
 
-  constructor(physicsCtx: PhysicsContext, inputManager: InputManager) {
+  constructor(physicsCtx: PhysicsContext, inputManager: InputManager, soundManager: SoundManager) {
     this.physics = physicsCtx;
     this.input = inputManager;
+    this.soundManager = soundManager;
   }
 
   update(world: World, _dt: number): void {
@@ -145,6 +148,7 @@ export class PlayerMovementSystem implements System {
       const awayX = -player.wallDirection * WALL_JUMP_IMPULSE_X;
       body.setLinvel({ x: awayX, y: WALL_JUMP_IMPULSE_Y }, true);
       player.jumpCount = 1;
+      this.soundManager.play('jump');
       return;
     }
 
@@ -152,6 +156,7 @@ export class PlayerMovementSystem implements System {
     if (player.isGrounded) {
       body.setLinvel({ x: vel.x, y: PLAYER_JUMP_IMPULSE }, true);
       player.jumpCount = 1;
+      this.soundManager.play('jump');
       return;
     }
 
@@ -159,6 +164,7 @@ export class PlayerMovementSystem implements System {
     if (player.jumpCount < 2) {
       body.setLinvel({ x: vel.x, y: PLAYER_JUMP_IMPULSE }, true);
       player.jumpCount += 1;
+      this.soundManager.play('jump');
     }
   }
 

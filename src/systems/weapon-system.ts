@@ -11,20 +11,24 @@ import type { World } from '../core/world.js';
 import type { PhysicsContext } from '../core/physics.js';
 import type { Container } from 'pixi.js';
 import { createProjectileEntity } from '../entities/create-projectile.js';
+import type { SoundManager } from '../audio/sound-manager.js';
 
 export class WeaponSystem implements System {
   readonly priority = 30;
 
   private readonly physicsCtx: PhysicsContext;
   private readonly worldContainer: Container;
+  private readonly soundManager: SoundManager;
 
   /**
    * @param physicsCtx     - shared physics context for projectile creation
    * @param worldContainer - PixiJS container for projectile visuals
+   * @param soundManager   - audio manager for firing sounds
    */
-  constructor(physicsCtx: PhysicsContext, worldContainer: Container) {
+  constructor(physicsCtx: PhysicsContext, worldContainer: Container, soundManager: SoundManager) {
     this.physicsCtx = physicsCtx;
     this.worldContainer = worldContainer;
+    this.soundManager = soundManager;
   }
 
   /**
@@ -84,6 +88,8 @@ export class WeaponSystem implements System {
         weapon.damage,
         entity,
       );
+
+      this.soundManager.play('laser');
 
       // Reset cooldown: 1 / fireRate seconds between shots
       weapon.cooldownTimer = 1 / weapon.fireRate;

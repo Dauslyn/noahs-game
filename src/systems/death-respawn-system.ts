@@ -22,6 +22,7 @@ import {
   createFlyerEnemy,
   createTurretEnemy,
 } from '../entities/create-enemy.js';
+import type { SoundManager } from '../audio/sound-manager.js';
 
 // ---------------------------------------------------------------------------
 // System
@@ -44,22 +45,26 @@ export class DeathRespawnSystem implements System {
 
   private readonly physicsCtx: PhysicsContext;
   private readonly worldContainer: Container;
+  private readonly soundManager: SoundManager;
 
   /**
    * @param physicsCtx     - shared Rapier physics context
    * @param worldContainer - PixiJS world-space container for visuals
    * @param playerSpawn    - pixel position where the player respawns
    * @param spawnPoints    - enemy spawn definitions from the level data
+   * @param soundManager   - audio manager for death sound
    */
   constructor(
     physicsCtx: PhysicsContext,
     worldContainer: Container,
     playerSpawn: { x: number; y: number },
     spawnPoints: SpawnPointDef[],
+    soundManager: SoundManager,
   ) {
     this.physicsCtx = physicsCtx;
     this.worldContainer = worldContainer;
     this.playerSpawn = playerSpawn;
+    this.soundManager = soundManager;
     // Only keep enemy spawn points (filter out player type)
     this.enemySpawnPoints = spawnPoints.filter(
       (sp) => sp.type !== 'player',
@@ -118,6 +123,7 @@ export class DeathRespawnSystem implements System {
     player.state = 'dead';
     this.isPlayerDead = true;
     this.respawnTimer = RESPAWN_DELAY;
+    this.soundManager.play('death');
 
     // Zero out velocity so the body doesn't slide while dead
     const body = this.physicsCtx.world.getRigidBody(pb.bodyHandle);

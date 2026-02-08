@@ -12,6 +12,7 @@ import type { PhysicsContext } from '../core/physics.js';
 import type { Container } from 'pixi.js';
 import { unregisterCollider } from '../core/collision-utils.js';
 import { INVINCIBILITY_DURATION } from '../core/constants.js';
+import type { SoundManager } from '../audio/sound-manager.js';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -35,6 +36,7 @@ export class DamageSystem implements System {
 
   private readonly physicsCtx: PhysicsContext;
   private readonly worldContainer: Container;
+  private readonly soundManager: SoundManager;
 
   /** Queue of enemy entities to destroy at end of frame. */
   private destroyQueue: Entity[] = [];
@@ -42,10 +44,12 @@ export class DamageSystem implements System {
   /**
    * @param physicsCtx     - shared physics context for body removal / impulse
    * @param worldContainer - PixiJS container for display object cleanup
+   * @param soundManager   - audio manager for hit/death sounds
    */
-  constructor(physicsCtx: PhysicsContext, worldContainer: Container) {
+  constructor(physicsCtx: PhysicsContext, worldContainer: Container, soundManager: SoundManager) {
     this.physicsCtx = physicsCtx;
     this.worldContainer = worldContainer;
+    this.soundManager = soundManager;
   }
 
   /**
@@ -142,6 +146,9 @@ export class DamageSystem implements System {
         playerHealth.current - enemy.contactDamage,
       );
 
+      // Play hit sound effect
+      this.soundManager.play('hit');
+
       // Set invincibility
       playerHealth.invincibleTimer = INVINCIBILITY_DURATION;
 
@@ -196,6 +203,7 @@ export class DamageSystem implements System {
 
       if (health.isDead) {
         this.destroyQueue.push(entity);
+        this.soundManager.play('enemy-death');
       }
     }
   }

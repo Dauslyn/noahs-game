@@ -24,6 +24,9 @@ import { EnemyAISystem } from '../systems/enemy-ai-system.js';
 import { DamageSystem } from '../systems/damage-system.js';
 import { DeathRespawnSystem } from '../systems/death-respawn-system.js';
 import { StarfieldSystem } from '../systems/starfield-system.js';
+import { HudSystem } from '../systems/hud-system.js';
+import { SoundManager } from '../audio/sound-manager.js';
+import { EffectsSystem, createWorldBloom } from '../systems/effects-system.js';
 import { PROTOTYPE_LEVEL } from '../level/level-data.js';
 import { buildLevel } from '../level/level-builder.js';
 import { createPlayerEntity } from '../entities/create-player.js';
@@ -90,8 +93,15 @@ export class Game {
     this.app.stage.addChild(this.worldContainer);
     this.app.stage.addChild(this.uiContainer);
 
+    // 4c. Apply subtle bloom to the world container for sci-fi atmosphere
+    this.worldContainer.filters = [createWorldBloom()];
+
     // 5. Input
     this.inputManager = new InputManager();
+
+    // 5b. Audio
+    const soundManager = new SoundManager();
+    soundManager.loadAll();
 
     // 6. Build level
     const levelData = PROTOTYPE_LEVEL;
@@ -141,17 +151,20 @@ export class Game {
     this.addSystem(starfield);
     this.addSystem(new PhysicsSystem(this.physicsCtx));
     this.addSystem(new EnemyAISystem(this.physicsCtx, this.worldContainer));
-    this.addSystem(new PlayerMovementSystem(this.physicsCtx, this.inputManager));
+    this.addSystem(new PlayerMovementSystem(this.physicsCtx, this.inputManager, soundManager));
     this.addSystem(new MechFollowSystem());
-    this.addSystem(new WeaponSystem(this.physicsCtx, this.worldContainer));
+    this.addSystem(new WeaponSystem(this.physicsCtx, this.worldContainer, soundManager));
     this.addSystem(new ProjectileSystem(this.physicsCtx, this.worldContainer));
-    this.addSystem(new DamageSystem(this.physicsCtx, this.worldContainer));
+    this.addSystem(new DamageSystem(this.physicsCtx, this.worldContainer, soundManager));
     this.addSystem(new DeathRespawnSystem(
       this.physicsCtx,
       this.worldContainer,
       levelData.playerSpawn,
       levelData.spawnPoints,
+      soundManager,
     ));
+    this.addSystem(new HudSystem(this.uiContainer));
+    this.addSystem(new EffectsSystem());
     this.addSystem(new CameraSystem(this.worldContainer, levelBounds));
     this.addSystem(new RenderSystem(this.worldContainer));
 
