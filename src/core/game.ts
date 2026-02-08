@@ -22,6 +22,8 @@ import { WeaponSystem } from '../systems/weapon-system.js';
 import { ProjectileSystem } from '../systems/projectile-system.js';
 import { EnemyAISystem } from '../systems/enemy-ai-system.js';
 import { DamageSystem } from '../systems/damage-system.js';
+import { DeathRespawnSystem } from '../systems/death-respawn-system.js';
+import { StarfieldSystem } from '../systems/starfield-system.js';
 import { PROTOTYPE_LEVEL } from '../level/level-data.js';
 import { buildLevel } from '../level/level-builder.js';
 import { createPlayerEntity } from '../entities/create-player.js';
@@ -79,7 +81,10 @@ export class Game {
     // 3. Create ECS world
     this.world = new World();
 
-    // 4. Stage hierarchy: worldContainer (camera-affected) + uiContainer (fixed)
+    // 4a. Starfield (added first so it renders behind everything)
+    const starfield = new StarfieldSystem(this.app.stage);
+
+    // 4b. Stage hierarchy: worldContainer (camera-affected) + uiContainer (fixed)
     this.worldContainer = new Container();
     this.uiContainer = new Container();
     this.app.stage.addChild(this.worldContainer);
@@ -133,6 +138,7 @@ export class Game {
       height: levelData.height,
     };
 
+    this.addSystem(starfield);
     this.addSystem(new PhysicsSystem(this.physicsCtx));
     this.addSystem(new EnemyAISystem(this.physicsCtx, this.worldContainer));
     this.addSystem(new PlayerMovementSystem(this.physicsCtx, this.inputManager));
@@ -140,6 +146,12 @@ export class Game {
     this.addSystem(new WeaponSystem(this.physicsCtx, this.worldContainer));
     this.addSystem(new ProjectileSystem(this.physicsCtx, this.worldContainer));
     this.addSystem(new DamageSystem(this.physicsCtx, this.worldContainer));
+    this.addSystem(new DeathRespawnSystem(
+      this.physicsCtx,
+      this.worldContainer,
+      levelData.playerSpawn,
+      levelData.spawnPoints,
+    ));
     this.addSystem(new CameraSystem(this.worldContainer, levelBounds));
     this.addSystem(new RenderSystem(this.worldContainer));
 
