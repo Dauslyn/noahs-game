@@ -235,16 +235,31 @@ Equipping compatible components triggers synergy discovery.
 **Gate: Phase 1 must be fun before moving on.**
 **Status:** Core prototype works. Procedural sci-fi visuals in place. LDtk integration deferred to Phase 2. Sound files not yet generated.
 
-### Phase 2: Core Loop
-- [ ] Ship view (universe map, planet selection)
-- [ ] 3-4 planets with different biomes and difficulty
-- [ ] Mech loadout system (equip/swap weapons and utility)
+### Phase 2a: Visual & Audio Upgrade
+- [ ] Integrate free 32x32 sprite packs (player, mech, enemies, tileset)
+- [ ] Add parallax planet backgrounds
+- [ ] Add sound effects (free CC0 packs)
+- [ ] Asset loading screen
+
+### Phase 2b: Multiple Planets
+- [ ] Scene/state manager (menu → planet → death → planet)
+- [ ] 2-3 planet levels with different biomes
+- [ ] Planet selection screen
+
+### Phase 2c: Loadout & Inventory
+- [ ] Mech loadout screen (equip/swap weapons)
 - [ ] Basic inventory and resource collection
+- [ ] Death loop (die → ship → re-equip → retry)
+
+### Phase 2d: Economy & NPCs
 - [ ] One friendly planet with shop/trader NPC
-- [ ] Ship upgrade tier 1 -> tier 2
-- [ ] Death loop (die -> ship -> re-equip -> retry)
+- [ ] Buy/sell weapons and items
+- [ ] Ship upgrade tier 1 → tier 2
+
+### Phase 2e: Combat Depth
+- [ ] More enemy variety per biome
+- [ ] One boss fight
 - [ ] Mech utility mode (grapple or drill)
-- [ ] More enemy variety + one boss
 
 ### Phase 3: Depth
 - [ ] Synergy/combo system
