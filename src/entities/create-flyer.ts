@@ -70,7 +70,7 @@ export function createFlyerEnemy(
   world.addComponent(entity, createTransform(x, y));
   world.addComponent(entity, createPhysicsBody(body.handle, 'dynamic'));
   world.addComponent(entity, createHealth(20));
-  world.addComponent(entity, createEnemy('flyer', 10, 250, 0, x));
+  world.addComponent(entity, createEnemy('flyer', 10, 250, { patrolOriginX: x }));
 
   // -- Animated sprite --
   const animSprite = buildFlyerSprite();

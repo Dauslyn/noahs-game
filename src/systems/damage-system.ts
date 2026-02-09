@@ -231,7 +231,9 @@ export class DamageSystem implements System {
   private getScrapValue(enemyType: string): number {
     switch (enemyType) {
       case 'walker': return 5;
+      case 'sentry': return 7;
       case 'flyer': return 8;
+      case 'crawler': return 9;
       case 'turret': return 10;
       default: return 5;
     }

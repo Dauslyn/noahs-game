@@ -67,6 +67,9 @@ export const CRYSTAL_CAVERNS: LevelData = {
     { x: 2700, y: 920, type: 'enemy-walker' },
     { x: 2900, y: 1120, type: 'enemy-walker' },
     { x: 1900, y: 370, type: 'enemy-turret' },
+    // Crawlers cling to ceilings above vertical shafts
+    { x: 900, y: 610, type: 'enemy-crawler' },
+    { x: 2300, y: 560, type: 'enemy-crawler' },
   ],
 };
 
