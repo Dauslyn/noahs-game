@@ -12,7 +12,7 @@ import { SCREEN_WIDTH, SCREEN_HEIGHT } from './constants.js';
 import { InputManager } from '../input/input-manager.js';
 import { loadAllAssets } from './asset-loader.js';
 import { LoadingScreen } from '../ui/loading-screen.js';
-import { PlanetSelectScreen } from '../ui/planet-select-screen.js';
+import { HubScreen } from '../ui/hub-screen.js';
 import { PhysicsSystem } from '../systems/physics-system.js';
 import { PlayerMovementSystem } from '../systems/player-movement-system.js';
 import { CameraSystem } from '../systems/camera-system.js';
@@ -55,7 +55,7 @@ export class Game {
   private inputManager!: InputManager;
   private soundManager!: SoundManager;
   private currentScene: Scene = 'planet-select';
-  private planetSelect: PlanetSelectScreen | null = null;
+  private hubScreen: HubScreen | null = null;
   private starfield!: StarfieldSystem;
   private parallaxBg: ParallaxBgSystem | null = null;
   private gameState: GameState = createGameState();
@@ -123,30 +123,30 @@ export class Game {
       }
     });
 
-    // 8. Show planet select
-    this.showPlanetSelect();
-    console.log("[Noah's Game] Ready — select a planet");
+    // 8. Show hub screen (weapon loadout + planet select)
+    this.showHub();
+    console.log("[Noah's Game] Ready — select a weapon and deploy");
   }
 
   // — Scene transitions —
 
-  private showPlanetSelect(): void {
+  private showHub(): void {
     this.currentScene = 'planet-select';
 
     // Clean up previous parallax layers if any
     this.parallaxBg?.destroy(this.app.stage);
     this.parallaxBg = null;
 
-    this.planetSelect = new PlanetSelectScreen(
-      ALL_LEVELS,
+    this.hubScreen = new HubScreen(
+      ALL_LEVELS, this.gameState,
       (level) => this.startLevel(level),
     );
-    this.app.stage.addChild(this.planetSelect.container);
+    this.app.stage.addChild(this.hubScreen.container);
   }
 
   private startLevel(levelData: LevelData): void {
-    this.planetSelect?.hide();
-    this.planetSelect = null;
+    this.hubScreen?.hide();
+    this.hubScreen = null;
     this.loadLevel(levelData);
     this.currentScene = 'gameplay';
     console.log(`[Game] Started: ${levelData.name}`);
@@ -156,7 +156,7 @@ export class Game {
   returnToPlanetSelect(): void {
     applyDeathPenalty(this.gameState);
     this.unloadLevel();
-    this.showPlanetSelect();
+    this.showHub();
   }
 
   // — Level lifecycle —
@@ -177,11 +177,10 @@ export class Game {
       this.world, this.physicsCtx, this.worldContainer,
       levelData.playerSpawn.x, levelData.playerSpawn.y,
     );
-    // Hardcoded to 'laser' — will be replaced with gameState.equippedWeapon
     createMechEntity(
       this.world, this.worldContainer, playerEntity,
       levelData.playerSpawn.x, levelData.playerSpawn.y,
-      'laser',
+      this.gameState.equippedWeapon!,
     );
 
     for (const sp of levelData.spawnPoints) {
