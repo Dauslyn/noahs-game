@@ -70,6 +70,8 @@ export const CRYSTAL_CAVERNS: LevelData = {
     // Crawlers cling to ceilings above vertical shafts
     { x: 900, y: 610, type: 'enemy-crawler' },
     { x: 2300, y: 560, type: 'enemy-crawler' },
+    // Phantom ambusher in the centre platform area
+    { x: 1600, y: 1070, type: 'enemy-phantom' },
   ],
 };
 
@@ -149,6 +151,8 @@ export const NEON_OUTPOST: LevelData = {
     // Shielders patrol tight corridors — force flanking
     { x: 1150, y: 1020, type: 'enemy-shielder' },
     { x: 2150, y: 920, type: 'enemy-shielder' },
+    // Phantom ambusher in the corridor area
+    { x: 1650, y: 970, type: 'enemy-phantom' },
     // Boss (spawned dynamically by BossTriggerSystem)
     { x: 3200, y: 1280, type: 'enemy-boss-warden' },
   ],

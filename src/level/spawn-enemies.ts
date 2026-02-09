@@ -14,6 +14,7 @@ import {
   createSentryEnemy,
   createCrawlerEnemy,
   createShielderEnemy,
+  createPhantomEnemy,
 } from '../entities/create-enemy.js';
 
 /**
@@ -45,6 +46,9 @@ export function spawnEnemies(
         break;
       case 'enemy-shielder':
         createShielderEnemy(world, physicsCtx, worldContainer, sp.x, sp.y);
+        break;
+      case 'enemy-phantom':
+        createPhantomEnemy(world, physicsCtx, worldContainer, sp.x, sp.y);
         break;
       case 'enemy-boss-warden':
         // Boss spawned dynamically by BossTriggerSystem — skip here

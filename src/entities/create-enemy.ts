@@ -9,4 +9,5 @@ export { createTurretEnemy } from './create-turret.js';
 export { createSentryEnemy } from './create-sentry.js';
 export { createCrawlerEnemy } from './create-crawler.js';
 export { createShielderEnemy } from './create-shielder.js';
+export { createPhantomEnemy } from './create-phantom.js';
 export { createBossWarden } from './create-boss-warden.js';

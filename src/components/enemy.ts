@@ -10,7 +10,8 @@ import type { Component } from '../core/types.js';
 /** Broad categories of enemy behaviour. */
 export type EnemyType =
   | 'walker' | 'flyer' | 'turret'
-  | 'sentry' | 'crawler' | 'shielder';
+  | 'sentry' | 'crawler' | 'shielder'
+  | 'phantom';
 
 /** High-level AI state. */
 export type EnemyState = 'idle' | 'patrolling' | 'chasing' | 'attacking' | 'dead';

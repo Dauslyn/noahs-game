@@ -35,7 +35,7 @@ export interface SpawnPointDef {
   type:
     | 'player' | 'enemy-walker' | 'enemy-flyer' | 'enemy-turret'
     | 'enemy-sentry' | 'enemy-crawler' | 'enemy-shielder'
-    | 'enemy-boss-warden';
+    | 'enemy-phantom' | 'enemy-boss-warden';
 }
 
 /** Complete level definition consumed by the level builder. */

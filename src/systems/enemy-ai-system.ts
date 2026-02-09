@@ -26,6 +26,7 @@ import {
   updateCrawler,
 } from './enemy-ai-behaviours-2.js';
 import { updateShielder } from './enemy-ai-behaviours-3.js';
+import { updatePhantom } from './enemy-ai-behaviours-4.js';
 
 // ---------------------------------------------------------------------------
 // System
@@ -117,6 +118,13 @@ export class EnemyAISystem implements System {
           break;
         case 'shielder':
           updateShielder(
+            this.physicsCtx, enemy, pb.bodyHandle,
+            transform, playerTransform, inRange, dt,
+            world.getComponent(entity, 'sprite'),
+          );
+          break;
+        case 'phantom':
+          updatePhantom(
             this.physicsCtx, enemy, pb.bodyHandle,
             transform, playerTransform, inRange, dt,
             world.getComponent(entity, 'sprite'),
