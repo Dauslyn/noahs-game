@@ -1,7 +1,4 @@
-/**
- * Game – top-level orchestrator. Supports scene transitions:
- * planet-select ↔ gameplay. Usage: `new Game().init()`
- */
+/** Game – top-level orchestrator. Scene transitions: hub ↔ gameplay. */
 
 import { Application, Container } from 'pixi.js';
 import type { System } from './types.js';
@@ -40,6 +37,7 @@ import { createMechEntity } from '../entities/create-mech.js';
 import { spawnEnemies } from '../level/spawn-enemies.js';
 import { BossTriggerSystem } from '../systems/boss-trigger-system.js';
 import { BossAISystem } from '../systems/boss-ai-system.js';
+import { LevelCompleteSystem } from '../systems/level-complete-system.js';
 
 type Scene = 'planet-select' | 'gameplay';
 const BACKGROUND_COLOR = 0x0a0a2e;
@@ -157,6 +155,13 @@ export class Game {
     this.showHub();
   }
 
+  /** Called by LevelCompleteSystem — return to hub with scrap intact. */
+  returnToHubVictory(): void {
+    this.unloadLevel();
+    this.showHub();
+    console.log('[Game] Level complete — returning to hub');
+  }
+
   // — Level lifecycle —
 
   private loadLevel(levelData: LevelData): void {
@@ -216,6 +221,11 @@ export class Game {
       levelData.playerSpawn, levelData.spawnPoints,
       this.soundManager,
       () => this.returnToPlanetSelect(),
+    ));
+    this.addSystem(new LevelCompleteSystem(
+      this.worldContainer, this.soundManager,
+      !!levelData.bossTriggerX,
+      () => this.returnToHubVictory(),
     ));
     this.addSystem(new HudSystem(this.uiContainer, this.gameState));
     this.addSystem(new AnimationSystem());
