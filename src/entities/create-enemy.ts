@@ -6,3 +6,5 @@
 export { createWalkerEnemy } from './create-walker.js';
 export { createFlyerEnemy } from './create-flyer.js';
 export { createTurretEnemy } from './create-turret.js';
+export { createSentryEnemy } from './create-sentry.js';
+export { createCrawlerEnemy } from './create-crawler.js';

@@ -37,11 +37,7 @@ import { ALL_LEVELS } from '../level/extra-levels.js';
 import { buildLevel } from '../level/level-builder.js';
 import { createPlayerEntity } from '../entities/create-player.js';
 import { createMechEntity } from '../entities/create-mech.js';
-import {
-  createWalkerEnemy,
-  createFlyerEnemy,
-  createTurretEnemy,
-} from '../entities/create-enemy.js';
+import { spawnEnemies } from '../level/spawn-enemies.js';
 
 type Scene = 'planet-select' | 'gameplay';
 const BACKGROUND_COLOR = 0x0a0a2e;
@@ -183,25 +179,9 @@ export class Game {
       this.gameState.equippedWeapon!,
     );
 
-    for (const sp of levelData.spawnPoints) {
-      switch (sp.type) {
-        case 'enemy-walker':
-          createWalkerEnemy(
-            this.world, this.physicsCtx, this.worldContainer, sp.x, sp.y,
-          );
-          break;
-        case 'enemy-flyer':
-          createFlyerEnemy(
-            this.world, this.physicsCtx, this.worldContainer, sp.x, sp.y,
-          );
-          break;
-        case 'enemy-turret':
-          createTurretEnemy(
-            this.world, this.physicsCtx, this.worldContainer, sp.x, sp.y,
-          );
-          break;
-      }
-    }
+    spawnEnemies(
+      levelData.spawnPoints, this.world, this.physicsCtx, this.worldContainer,
+    );
 
     // Rebuild systems (they hold level-specific state)
     this.systems = [];

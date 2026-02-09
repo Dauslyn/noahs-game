@@ -8,7 +8,9 @@
 import type { Component } from '../core/types.js';
 
 /** Broad categories of enemy behaviour. */
-export type EnemyType = 'walker' | 'flyer' | 'turret';
+export type EnemyType =
+  | 'walker' | 'flyer' | 'turret'
+  | 'sentry' | 'crawler' | 'shielder';
 
 /** High-level AI state. */
 export type EnemyState = 'idle' | 'patrolling' | 'chasing' | 'attacking' | 'dead';
@@ -26,6 +28,10 @@ export interface EnemyComponent extends Component {
   patrolDistance: number;
   /** X coordinate where the enemy was spawned (pixels). Used as patrol centre. */
   patrolOriginX: number;
+  /** Y coordinate where the enemy was spawned (pixels). Used by sentry orbit. */
+  patrolOriginY: number;
+  /** General-purpose timer for sentry dash cooldown, crawler drop delay, etc. */
+  actionTimer: number;
   /** Damage dealt on contact with the player. */
   contactDamage: number;
   /** Distance at which the enemy notices the player (pixels). */
@@ -34,27 +40,29 @@ export interface EnemyComponent extends Component {
   state: EnemyState;
 }
 
-/**
- * Create an EnemyComponent.
- * @param enemyType      – walker / flyer / turret
- * @param contactDamage  – damage on touch
- * @param detectionRange – aggro radius in pixels
- * @param patrolDistance  – max patrol range from origin (pixels, default 100)
- * @param patrolOriginX  – spawn X used as patrol centre (pixels, default 0)
- */
+/** Options for createEnemy beyond the required fields. */
+interface EnemyOptions {
+  patrolDistance?: number;
+  patrolOriginX?: number;
+  patrolOriginY?: number;
+  actionTimer?: number;
+}
+
+/** Create an EnemyComponent with sensible defaults for optional fields. */
 export function createEnemy(
   enemyType: EnemyType,
   contactDamage: number,
   detectionRange: number,
-  patrolDistance = 100,
-  patrolOriginX = 0,
+  opts: EnemyOptions = {},
 ): EnemyComponent {
   return {
     type: 'enemy',
     enemyType,
     patrolDirection: 1,
-    patrolDistance,
-    patrolOriginX,
+    patrolDistance: opts.patrolDistance ?? 100,
+    patrolOriginX: opts.patrolOriginX ?? 0,
+    patrolOriginY: opts.patrolOriginY ?? 0,
+    actionTimer: opts.actionTimer ?? 0,
     contactDamage,
     detectionRange,
     state: 'patrolling',

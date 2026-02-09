@@ -32,7 +32,9 @@ export interface SpawnPointDef {
   /** Y position (pixels). */
   y: number;
   /** Entity type to spawn. */
-  type: 'player' | 'enemy-walker' | 'enemy-flyer' | 'enemy-turret';
+  type:
+    | 'player' | 'enemy-walker' | 'enemy-flyer' | 'enemy-turret'
+    | 'enemy-sentry' | 'enemy-crawler' | 'enemy-shielder';
 }
 
 /** Complete level definition consumed by the level builder. */
@@ -126,5 +128,7 @@ export const PROTOTYPE_LEVEL: LevelData = {
     { x: 1400, y: 870, type: 'enemy-walker' },
     { x: 1200, y: 600, type: 'enemy-flyer' },
     { x: 2000, y: 470, type: 'enemy-turret' },
+    { x: 750, y: 680, type: 'enemy-sentry' },
+    { x: 1800, y: 480, type: 'enemy-sentry' },
   ],
 };

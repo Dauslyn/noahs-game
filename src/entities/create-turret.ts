@@ -64,7 +64,7 @@ export function createTurretEnemy(
   world.addComponent(entity, createTransform(x, y));
   world.addComponent(entity, createPhysicsBody(body.handle, 'static'));
   world.addComponent(entity, createHealth(50));
-  world.addComponent(entity, createEnemy('turret', 0, 300, 0, x));
+  world.addComponent(entity, createEnemy('turret', 0, 300, { patrolOriginX: x }));
   world.addComponent(entity, createWeapon('laser', 8, 1.5, 300, 10));
 
   // -- Animated sprite --

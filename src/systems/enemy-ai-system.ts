@@ -21,6 +21,10 @@ import {
   updateFlyer,
   updateTurret,
 } from './enemy-ai-behaviours.js';
+import {
+  updateSentry,
+  updateCrawler,
+} from './enemy-ai-behaviours-2.js';
 
 // ---------------------------------------------------------------------------
 // System
@@ -92,6 +96,18 @@ export class EnemyAISystem implements System {
           updateTurret(
             world, this.physicsCtx, this.worldContainer,
             entity, transform, playerTransform, dist, inRange, dt,
+          );
+          break;
+        case 'sentry':
+          updateSentry(
+            this.physicsCtx, enemy, pb.bodyHandle,
+            transform, playerTransform, inRange, this.time, dt,
+          );
+          break;
+        case 'crawler':
+          updateCrawler(
+            this.physicsCtx, enemy, pb.bodyHandle,
+            transform, playerTransform, inRange, dt,
           );
           break;
       }

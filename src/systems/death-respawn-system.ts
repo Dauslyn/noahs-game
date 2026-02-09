@@ -21,6 +21,8 @@ import {
   createWalkerEnemy,
   createFlyerEnemy,
   createTurretEnemy,
+  createSentryEnemy,
+  createCrawlerEnemy,
 } from '../entities/create-enemy.js';
 import type { SoundManager } from '../audio/sound-manager.js';
 
@@ -232,6 +234,16 @@ export class DeathRespawnSystem implements System {
           break;
         case 'enemy-turret':
           createTurretEnemy(
+            world, this.physicsCtx, this.worldContainer, sp.x, sp.y,
+          );
+          break;
+        case 'enemy-sentry':
+          createSentryEnemy(
+            world, this.physicsCtx, this.worldContainer, sp.x, sp.y,
+          );
+          break;
+        case 'enemy-crawler':
+          createCrawlerEnemy(
             world, this.physicsCtx, this.worldContainer, sp.x, sp.y,
           );
           break;

@@ -68,7 +68,9 @@ export function createWalkerEnemy(
   world.addComponent(entity, createTransform(x, y));
   world.addComponent(entity, createPhysicsBody(body.handle, 'dynamic'));
   world.addComponent(entity, createHealth(30));
-  world.addComponent(entity, createEnemy('walker', 15, 200, 100, x));
+  world.addComponent(entity, createEnemy('walker', 15, 200, {
+    patrolDistance: 100, patrolOriginX: x,
+  }));
 
   // -- Animated sprite --
   const animSprite = buildWalkerSprite();
