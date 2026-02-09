@@ -119,7 +119,7 @@ export class HudSystem implements System {
 
       if (bossComp?.activated && bossHealth && !bossHealth.isDead) {
         this.bossHealthBar.reposition(window.innerWidth, window.innerHeight);
-        this.bossHealthBar.update(bossHealth.current, bossHealth.max);
+        this.bossHealthBar.update(bossHealth.current, bossHealth.max, bossComp.phase);
         bossVisible = true;
         break;
       }

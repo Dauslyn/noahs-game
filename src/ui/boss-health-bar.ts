@@ -18,6 +18,12 @@ const NAME_STYLE = new TextStyle({
   fontWeight: 'bold',
 });
 
+const PHASE_STYLE = new TextStyle({
+  fontFamily: 'monospace',
+  fontSize: 14,
+  fill: 0xcccccc,
+});
+
 export class BossHealthBar {
   /** Top-level container; add to uiContainer for screen-fixed positioning. */
   readonly container: Container;
@@ -26,6 +32,7 @@ export class BossHealthBar {
   private readonly foreground: Graphics;
   private readonly border: Graphics;
   private readonly nameLabel: Text;
+  private readonly phaseLabel: Text;
 
   constructor() {
     this.container = new Container();
@@ -49,8 +56,15 @@ export class BossHealthBar {
     this.nameLabel.anchor.set(0.5, 1);
     this.nameLabel.y = -6;
 
+    // Phase indicator label (right side of bar, above)
+    this.phaseLabel = new Text({ text: 'PHASE 1', style: PHASE_STYLE });
+    this.phaseLabel.anchor.set(0.5, 1);
+    this.phaseLabel.y = -6;
+    this.phaseLabel.x = BAR_WIDTH / 2 - 40;
+
     this.container.addChild(
       this.background, this.foreground, this.border, this.nameLabel,
+      this.phaseLabel,
     );
   }
 
@@ -61,12 +75,13 @@ export class BossHealthBar {
   }
 
   /**
-   * Update bar fill. Makes container visible.
+   * Update bar fill and phase indicator. Makes container visible.
    *
    * @param current - current boss HP
    * @param max     - max boss HP
+   * @param phase   - current boss phase (1, 2, or 3)
    */
-  update(current: number, max: number): void {
+  update(current: number, max: number, phase: 1 | 2 | 3 = 1): void {
     this.container.visible = true;
     const ratio = Math.max(0, Math.min(1, current / max));
     const width = ratio * BAR_WIDTH;
@@ -80,6 +95,12 @@ export class BossHealthBar {
     this.foreground.clear();
     this.foreground.rect(-BAR_WIDTH / 2, 0, width, BAR_HEIGHT);
     this.foreground.fill(color);
+
+    // Update phase label text and color
+    this.phaseLabel.text = `PHASE ${phase}`;
+    if (phase === 3) this.phaseLabel.style.fill = 0xff2222;
+    else if (phase === 2) this.phaseLabel.style.fill = 0xffaa44;
+    else this.phaseLabel.style.fill = 0xcccccc;
   }
 
   /** Hide the boss health bar. */
