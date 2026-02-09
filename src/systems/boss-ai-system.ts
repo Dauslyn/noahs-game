@@ -21,6 +21,8 @@ import {
   handleLaser,
   handleCooldown,
 } from './boss-ai-behaviours.js';
+import type { SoundManager } from '../audio/sound-manager.js';
+import { trySpawnMinions } from './boss-phase3.js';
 
 /** Phase 2 HP threshold (60% of 300). */
 const PHASE2_HP = 180;
@@ -33,10 +35,16 @@ export class BossAISystem implements System {
 
   private readonly physicsCtx: PhysicsContext;
   private readonly worldContainer: Container;
+  private readonly soundManager: SoundManager;
 
-  constructor(physicsCtx: PhysicsContext, worldContainer: Container) {
+  constructor(
+    physicsCtx: PhysicsContext,
+    worldContainer: Container,
+    soundManager: SoundManager,
+  ) {
     this.physicsCtx = physicsCtx;
     this.worldContainer = worldContainer;
+    this.soundManager = soundManager;
   }
 
   update(world: World, dt: number): void {
@@ -85,7 +93,13 @@ export class BossAISystem implements System {
           break;
       }
 
-      // Visual: flash during windup, tint during charge
+      // Phase 3: attempt minion spawning each frame
+      trySpawnMinions(
+        boss, transform, world, this.physicsCtx,
+        this.worldContainer, this.soundManager, dt,
+      );
+
+      // Visual: flash during windup, tint during charge/enrage
       this.updateVisual(world, entity, boss);
     }
   }
@@ -99,7 +113,7 @@ export class BossAISystem implements System {
     }
   }
 
-  /** Flash during windup, orange tint during charge, reset otherwise. */
+  /** Flash during windup, orange/red tint during charge, permanent red in Phase 3. */
   private updateVisual(
     world: World,
     entity: Entity,
@@ -109,16 +123,32 @@ export class BossAISystem implements System {
     if (!sprite) return;
 
     const gfx = sprite.displayObject;
-    if (boss.attackState === 'windup') {
-      // Flash between red and white to telegraph charge
-      const flash = Math.sin(boss.stateTimer * 20) > 0;
-      gfx.tint = flash ? 0xff4444 : 0xffffff;
-    } else if (boss.attackState === 'charging') {
-      gfx.tint = 0xff6644;
-    } else if (boss.attackState === 'laser') {
-      gfx.tint = 0xff8844;
+
+    if (boss.phase >= 3) {
+      // Phase 3 enrage: permanent red base tint with faster flashing
+      if (boss.attackState === 'windup') {
+        const flash = Math.sin(boss.stateTimer * 25) > 0;
+        gfx.tint = flash ? 0xff0000 : 0xaa0000;
+      } else if (boss.attackState === 'charging') {
+        gfx.tint = 0xff2222;
+      } else if (boss.attackState === 'laser') {
+        gfx.tint = 0xff2222;
+      } else {
+        // Permanent red tint during patrol/cooldown in Phase 3
+        gfx.tint = 0xff2222;
+      }
     } else {
-      gfx.tint = 0xffffff;
+      // Phases 1-2: existing behaviour
+      if (boss.attackState === 'windup') {
+        const flash = Math.sin(boss.stateTimer * 20) > 0;
+        gfx.tint = flash ? 0xff4444 : 0xffffff;
+      } else if (boss.attackState === 'charging') {
+        gfx.tint = 0xff6644;
+      } else if (boss.attackState === 'laser') {
+        gfx.tint = 0xff8844;
+      } else {
+        gfx.tint = 0xffffff;
+      }
     }
   }
 

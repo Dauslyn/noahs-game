@@ -10,6 +10,12 @@ import type { Container } from 'pixi.js';
 import type { BossComponent } from '../components/boss.js';
 import type { TransformComponent } from '../components/index.js';
 import { createBossLaser } from '../entities/create-boss-laser.js';
+import {
+  P3_CHARGE_SPEED,
+  P3_COOLDOWN_DURATION,
+  P3_PATROL_INTERVAL,
+  P3_WINDUP_DURATION,
+} from './boss-phase3.js';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -71,7 +77,7 @@ export function handlePatrol(
     // Face toward player and begin windup
     boss.chargeDirection = playerTransform.x > transform.x ? 1 : -1;
     boss.attackState = 'windup';
-    boss.stateTimer = WINDUP_DURATION;
+    boss.stateTimer = boss.phase >= 3 ? P3_WINDUP_DURATION : WINDUP_DURATION;
     body.setLinvel({ x: 0, y: vel.y }, true);
   }
 }
@@ -100,7 +106,9 @@ export function handleCharge(
   dt: number,
 ): void {
   const vel = body.linvel();
-  body.setLinvel({ x: boss.chargeDirection * CHARGE_SPEED, y: vel.y }, true);
+  // Phase 3 charges faster
+  const speed = boss.phase >= 3 ? P3_CHARGE_SPEED : CHARGE_SPEED;
+  body.setLinvel({ x: boss.chargeDirection * speed, y: vel.y }, true);
 
   boss.stateTimer -= dt;
 
@@ -111,6 +119,7 @@ export function handleCharge(
 
   if (boss.stateTimer <= 0 || hitEdge) {
     body.setLinvel({ x: 0, y: vel.y }, true);
+    const cooldown = boss.phase >= 3 ? P3_COOLDOWN_DURATION : COOLDOWN_DURATION;
 
     // Phase 2+: fire laser after charge
     if (boss.phase >= 2) {
@@ -119,7 +128,7 @@ export function handleCharge(
       boss.laserFired = false;
     } else {
       boss.attackState = 'cooldown';
-      boss.stateTimer = COOLDOWN_DURATION;
+      boss.stateTimer = cooldown;
     }
   }
 }
@@ -153,7 +162,7 @@ export function handleLaser(
   boss.stateTimer -= dt;
   if (boss.stateTimer <= 0) {
     boss.attackState = 'cooldown';
-    boss.stateTimer = COOLDOWN_DURATION;
+    boss.stateTimer = boss.phase >= 3 ? P3_COOLDOWN_DURATION : COOLDOWN_DURATION;
   }
 }
 
@@ -169,6 +178,6 @@ export function handleCooldown(
   boss.stateTimer -= dt;
   if (boss.stateTimer <= 0) {
     boss.attackState = 'patrol';
-    boss.patrolTimer = PATROL_ATTACK_INTERVAL;
+    boss.patrolTimer = boss.phase >= 3 ? P3_PATROL_INTERVAL : PATROL_ATTACK_INTERVAL;
   }
 }

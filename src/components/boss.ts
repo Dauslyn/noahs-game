@@ -39,6 +39,8 @@ export interface BossComponent extends Component {
   activated: boolean;
   /** Whether the laser has been fired in the current laser state. */
   laserFired: boolean;
+  /** Time until next minion spawn in Phase 3 (seconds). */
+  minionSpawnTimer: number;
 }
 
 /** Create a BossComponent with default values. */
@@ -57,5 +59,6 @@ export function createBoss(
     arenaMaxX,
     activated: false,
     laserFired: false,
+    minionSpawnTimer: 8.0,
   };
 }

@@ -202,7 +202,7 @@ export class Game {
     this.addSystem(new BossTriggerSystem(
       this.physicsCtx, this.worldContainer, levelData,
     ));
-    this.addSystem(new BossAISystem(this.physicsCtx, this.worldContainer));
+    this.addSystem(new BossAISystem(this.physicsCtx, this.worldContainer, this.soundManager));
     this.addSystem(new EnemyAISystem(this.physicsCtx, this.worldContainer));
     this.addSystem(new PlayerMovementSystem(
       this.physicsCtx, this.inputManager, this.soundManager,
