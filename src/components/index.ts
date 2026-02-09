@@ -44,6 +44,12 @@ export {
   type AnimationData,
   createAnimationState,
 } from './animation-state.js';
+export {
+  type BossComponent,
+  type BossPhase,
+  type BossAttackState,
+  createBoss,
+} from './boss.js';
 
 // ---------------------------------------------------------------------------
 // ComponentMap – type-safe mapping from component type string to interface
@@ -60,6 +66,7 @@ import type { WeaponComponent } from './weapon.js';
 import type { EnemyComponent } from './enemy.js';
 import type { ProjectileComponent } from './projectile.js';
 import type { AnimationStateComponent } from './animation-state.js';
+import type { BossComponent } from './boss.js';
 
 /**
  * Maps each ComponentType string literal to its concrete interface.
@@ -84,4 +91,5 @@ export interface ComponentMap {
   enemy: EnemyComponent;
   projectile: ProjectileComponent;
   animationState: AnimationStateComponent;
+  boss: BossComponent;
 }

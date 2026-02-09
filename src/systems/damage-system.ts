@@ -206,11 +206,11 @@ export class DamageSystem implements System {
         this.entityManager.markForDestruction(entity);
         this.soundManager.play('enemy-death');
 
-        // Award scrap to the player based on enemy type
+        // Boss entities get special scrap reward (200)
+        const bossComp = world.getComponent(entity, 'boss');
         const enemy = world.getComponent(entity, 'enemy');
-        const scrapAmount = enemy
-          ? this.getScrapValue(enemy.enemyType)
-          : 5;
+        const scrapAmount = bossComp ? 200
+          : enemy ? this.getScrapValue(enemy.enemyType) : 5;
         addScrap(this.gameState, scrapAmount);
 
         // Spawn floating "+N" text at enemy position for visual feedback

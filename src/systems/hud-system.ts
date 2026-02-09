@@ -17,6 +17,7 @@ import type { System } from '../core/types.js';
 import type { World } from '../core/world.js';
 import type { GameState } from '../core/game-state.js';
 import { HealthBar } from '../ui/health-bar.js';
+import { BossHealthBar } from '../ui/boss-health-bar.js';
 
 const SCRAP_STYLE = new TextStyle({
   fontFamily: 'monospace',
@@ -37,6 +38,7 @@ export class HudSystem implements System {
   readonly priority = 98;
 
   private readonly healthBar: HealthBar;
+  private readonly bossHealthBar: BossHealthBar;
   private readonly scrapText: Text;
   private readonly shieldIcon: Text;
   private readonly medkitIcon: Text;
@@ -51,6 +53,10 @@ export class HudSystem implements System {
 
     this.healthBar = new HealthBar();
     uiContainer.addChild(this.healthBar.container);
+
+    this.bossHealthBar = new BossHealthBar();
+    this.bossHealthBar.reposition(window.innerWidth, window.innerHeight);
+    uiContainer.addChild(this.bossHealthBar.container);
 
     this.scrapText = new Text({ text: 'SCRAP: 0', style: SCRAP_STYLE });
     this.scrapText.x = 16;
@@ -97,5 +103,28 @@ export class HudSystem implements System {
     // Show/hide consumable icons based on current state
     this.shieldIcon.visible = this.gameState.shieldCharge;
     this.medkitIcon.visible = this.gameState.repairKit;
+
+    // Boss health bar: show only when an activated, living boss exists
+    this.updateBossHealthBar(world);
+  }
+
+  /** Show/hide boss health bar based on boss entity state. */
+  private updateBossHealthBar(world: World): void {
+    const bossEntities = world.query('boss', 'health');
+    let bossVisible = false;
+
+    for (const bossEntity of bossEntities) {
+      const bossComp = world.getComponent(bossEntity, 'boss');
+      const bossHealth = world.getComponent(bossEntity, 'health');
+
+      if (bossComp?.activated && bossHealth && !bossHealth.isDead) {
+        this.bossHealthBar.reposition(window.innerWidth, window.innerHeight);
+        this.bossHealthBar.update(bossHealth.current, bossHealth.max);
+        bossVisible = true;
+        break;
+      }
+    }
+
+    if (!bossVisible) this.bossHealthBar.hide();
   }
 }

@@ -81,10 +81,14 @@ export const NEON_OUTPOST: LevelData = {
   name: 'Neon Outpost',
   difficulty: 'Hard',
   environmentTheme: 'cyberpunk',
-  width: 2800,
+  width: 3600,
   height: 1400,
 
   playerSpawn: { x: 200, y: 1250 },
+
+  // Boss arena trigger + bounds
+  bossTriggerX: 2850,
+  bossArena: { minX: 2800, maxX: 3580, y: 1280 },
 
   platforms: [
     // Ground (split — gaps force jumping)
@@ -94,7 +98,7 @@ export const NEON_OUTPOST: LevelData = {
 
     // Walls
     { x: 10, y: 700, width: 20, height: 1400 },
-    { x: 2790, y: 700, width: 20, height: 1400 },
+    { x: 3590, y: 700, width: 20, height: 1400 },
 
     // Tight corridor walls (create hallways)
     { x: 400, y: 1050, width: 30, height: 400 },
@@ -124,6 +128,13 @@ export const NEON_OUTPOST: LevelData = {
 
     // Top platform (reward)
     { x: 1400, y: 300, width: 300, height: 24 },
+
+    // ---- Boss Arena (far right) ----
+    // Wide floor platform
+    { x: 3200, y: 1360, width: 800, height: 80 },
+    // Elevated dodge platforms
+    { x: 3000, y: 1100, width: 160, height: 24 },
+    { x: 3400, y: 1100, width: 160, height: 24 },
   ],
 
   spawnPoints: [
@@ -138,6 +149,8 @@ export const NEON_OUTPOST: LevelData = {
     // Shielders patrol tight corridors — force flanking
     { x: 1150, y: 1020, type: 'enemy-shielder' },
     { x: 2150, y: 920, type: 'enemy-shielder' },
+    // Boss (spawned dynamically by BossTriggerSystem)
+    { x: 3200, y: 1280, type: 'enemy-boss-warden' },
   ],
 };
 

@@ -46,7 +46,8 @@ export type ComponentType =
   | 'weapon'
   | 'enemy'
   | 'projectile'
-  | 'animationState';
+  | 'animationState'
+  | 'boss';
 
 /** Base shape every component must satisfy. */
 export interface Component {
