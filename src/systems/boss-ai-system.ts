@@ -74,10 +74,13 @@ export class BossAISystem implements System {
       // Delegate to state handlers
       switch (boss.attackState) {
         case 'patrol':
-          handlePatrol(boss, enemy, body, transform, playerTransform, dt);
+          handlePatrol(
+            boss, enemy, body, transform, playerTransform, dt,
+            this.soundManager,
+          );
           break;
         case 'windup':
-          handleWindup(boss, body, dt);
+          handleWindup(boss, body, dt, this.soundManager);
           break;
         case 'charging':
           handleCharge(boss, body, transform, dt);
@@ -85,7 +88,7 @@ export class BossAISystem implements System {
         case 'laser':
           handleLaser(
             boss, world, this.physicsCtx, this.worldContainer,
-            transform, body, dt, entity,
+            transform, body, dt, entity, this.soundManager,
           );
           break;
         case 'cooldown':
@@ -108,8 +111,10 @@ export class BossAISystem implements System {
   private updatePhase(boss: BossComponent, currentHp: number): void {
     if (boss.phase === 1 && currentHp <= PHASE2_HP) {
       boss.phase = 2;
+      this.soundManager.play('boss-phase-up');
     } else if (boss.phase === 2 && currentHp <= PHASE3_HP) {
       boss.phase = 3;
+      this.soundManager.play('boss-phase-up');
     }
   }
 

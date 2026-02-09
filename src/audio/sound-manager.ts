@@ -40,6 +40,14 @@ export class SoundManager {
       { name: 'shield-break', src: ['/assets/sounds/phaserDown3.mp3'], volume: 0.5 },
       { name: 'heal', src: ['/assets/sounds/powerUp7.mp3'], volume: 0.5 },
       { name: 'land', src: ['/assets/sounds/pepSound1.mp3'], volume: 0.15 },
+      // Boss sounds
+      { name: 'boss-spawn', src: ['/assets/sounds/phaserDown1.mp3'], volume: 0.6 },
+      { name: 'boss-windup', src: ['/assets/sounds/phaseJump3.mp3'], volume: 0.35 },
+      { name: 'boss-charge', src: ['/assets/sounds/lowThreeTone.mp3'], volume: 0.4 },
+      { name: 'boss-laser', src: ['/assets/sounds/laser7.mp3'], volume: 0.3 },
+      { name: 'boss-phase-up', src: ['/assets/sounds/phaserUp7.mp3'], volume: 0.5 },
+      { name: 'boss-death', src: ['/assets/sounds/spaceTrash5.mp3'], volume: 0.6 },
+      { name: 'minion-spawn', src: ['/assets/sounds/pepSound3.mp3'], volume: 0.3 },
     ];
 
     for (const def of soundDefs) {

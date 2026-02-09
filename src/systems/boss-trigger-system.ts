@@ -10,6 +10,7 @@ import type { World } from '../core/world.js';
 import type { PhysicsContext } from '../core/physics.js';
 import type { Container } from 'pixi.js';
 import type { LevelData } from '../level/level-data.js';
+import type { SoundManager } from '../audio/sound-manager.js';
 import { createBossWarden } from '../entities/create-boss-warden.js';
 
 export class BossTriggerSystem implements System {
@@ -18,6 +19,7 @@ export class BossTriggerSystem implements System {
   private readonly physicsCtx: PhysicsContext;
   private readonly worldContainer: Container;
   private readonly levelData: LevelData;
+  private readonly soundManager: SoundManager;
 
   /** Whether the player has crossed the trigger X-threshold. */
   private triggered = false;
@@ -29,10 +31,12 @@ export class BossTriggerSystem implements System {
     physicsCtx: PhysicsContext,
     worldContainer: Container,
     levelData: LevelData,
+    soundManager: SoundManager,
   ) {
     this.physicsCtx = physicsCtx;
     this.worldContainer = worldContainer;
     this.levelData = levelData;
+    this.soundManager = soundManager;
   }
 
   update(world: World, _dt: number): void {
@@ -83,5 +87,6 @@ export class BossTriggerSystem implements System {
     if (bossComp) bossComp.activated = true;
 
     this.bossSpawned = true;
+    this.soundManager.play('boss-spawn');
   }
 }

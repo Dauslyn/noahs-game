@@ -200,7 +200,7 @@ export class Game {
     this.addSystem(this.parallaxBg!); // non-null: created above
     this.addSystem(new PhysicsSystem(this.physicsCtx));
     this.addSystem(new BossTriggerSystem(
-      this.physicsCtx, this.worldContainer, levelData,
+      this.physicsCtx, this.worldContainer, levelData, this.soundManager,
     ));
     this.addSystem(new BossAISystem(this.physicsCtx, this.worldContainer, this.soundManager));
     this.addSystem(new EnemyAISystem(this.physicsCtx, this.worldContainer));

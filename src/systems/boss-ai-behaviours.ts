@@ -9,6 +9,7 @@ import type { PhysicsContext } from '../core/physics.js';
 import type { Container } from 'pixi.js';
 import type { BossComponent } from '../components/boss.js';
 import type { TransformComponent } from '../components/index.js';
+import type { SoundManager } from '../audio/sound-manager.js';
 import { createBossLaser } from '../entities/create-boss-laser.js';
 import {
   P3_CHARGE_SPEED,
@@ -63,6 +64,7 @@ export function handlePatrol(
   transform: TransformComponent,
   playerTransform: TransformComponent,
   dt: number,
+  soundManager: SoundManager,
 ): void {
   const vel = body.linvel();
 
@@ -79,6 +81,7 @@ export function handlePatrol(
     boss.attackState = 'windup';
     boss.stateTimer = boss.phase >= 3 ? P3_WINDUP_DURATION : WINDUP_DURATION;
     body.setLinvel({ x: 0, y: vel.y }, true);
+    soundManager.play('boss-windup');
   }
 }
 
@@ -87,6 +90,7 @@ export function handleWindup(
   boss: BossComponent,
   body: RapierBody,
   dt: number,
+  soundManager: SoundManager,
 ): void {
   const vel = body.linvel();
   body.setLinvel({ x: 0, y: vel.y }, true);
@@ -95,6 +99,7 @@ export function handleWindup(
   if (boss.stateTimer <= 0) {
     boss.attackState = 'charging';
     boss.stateTimer = CHARGE_DURATION;
+    soundManager.play('boss-charge');
   }
 }
 
@@ -143,6 +148,7 @@ export function handleLaser(
   body: RapierBody,
   dt: number,
   entity: Entity,
+  soundManager: SoundManager,
 ): void {
   const vel = body.linvel();
   body.setLinvel({ x: 0, y: vel.y }, true);
@@ -157,6 +163,7 @@ export function handleLaser(
       transform.x, transform.y,
       laserDir, entity,
     );
+    soundManager.play('boss-laser');
   }
 
   boss.stateTimer -= dt;
