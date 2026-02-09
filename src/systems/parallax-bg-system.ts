@@ -15,6 +15,7 @@
 import { TilingSprite, Container } from 'pixi.js';
 import type { System } from '../core/types.js';
 import type { World } from '../core/world.js';
+import type { BiomeConfig } from '../level/biome-config.js';
 // Use window dimensions since the app uses resizeTo: window
 const screenW = (): number => window.innerWidth;
 const screenH = (): number => window.innerHeight;
@@ -67,12 +68,12 @@ export class ParallaxBgSystem implements System {
    *
    * @param stage - the PixiJS Application stage
    */
-  constructor(stage: Container) {
+  constructor(stage: Container, biome: BiomeConfig) {
     let insertIndex = 0;
 
     // Far layer: sky background (fills entire screen)
-    if (hasTexture('bg-sky')) {
-      const skyTexture = getTexture('bg-sky');
+    if (hasTexture(biome.skyAlias)) {
+      const skyTexture = getTexture(biome.skyAlias);
       const skySprite = new TilingSprite({
         texture: skyTexture,
         width: screenW(),
@@ -89,12 +90,12 @@ export class ParallaxBgSystem implements System {
         parallaxFactor: SKY_PARALLAX,
       });
     } else {
-      console.warn('[ParallaxBg] bg-sky texture not loaded, skipping');
+      console.warn(`[ParallaxBg] ${biome.skyAlias} texture not loaded, skipping`);
     }
 
     // Near layer: industrial structures (bottom portion of screen)
-    if (hasTexture('bg-structures')) {
-      const structTexture = getTexture('bg-structures');
+    if (biome.structuresAlias && hasTexture(biome.structuresAlias)) {
+      const structTexture = getTexture(biome.structuresAlias);
       const structHeight = screenH() * STRUCTURES_HEIGHT_FRACTION;
       const structSprite = new TilingSprite({
         texture: structTexture,
@@ -113,8 +114,8 @@ export class ParallaxBgSystem implements System {
         sprite: structSprite,
         parallaxFactor: STRUCTURES_PARALLAX,
       });
-    } else {
-      console.warn('[ParallaxBg] bg-structures texture not loaded, skipping');
+    } else if (biome.structuresAlias) {
+      console.warn(`[ParallaxBg] ${biome.structuresAlias} texture not loaded, skipping`);
     }
 
     if (this.layers.length > 0) {
@@ -140,6 +141,15 @@ export class ParallaxBgSystem implements System {
     for (const layer of this.layers) {
       layer.sprite.visible = visible;
     }
+  }
+
+  /** Remove all parallax sprites from the stage. */
+  destroy(stage: Container): void {
+    for (const layer of this.layers) {
+      stage.removeChild(layer.sprite);
+      layer.sprite.destroy();
+    }
+    this.layers.length = 0;
   }
 
   update(world: World, _dt: number): void {
