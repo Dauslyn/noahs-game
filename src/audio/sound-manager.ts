@@ -37,6 +37,8 @@ export class SoundManager {
       { name: 'death', src: ['/assets/sounds/phaserDown2.mp3'], volume: 0.6 },
       { name: 'enemy-death', src: ['/assets/sounds/zapThreeToneDown.mp3'], volume: 0.35 },
       { name: 'powerup', src: ['/assets/sounds/powerUp3.mp3'], volume: 0.4 },
+      { name: 'shield-break', src: ['/assets/sounds/phaserDown3.mp3'], volume: 0.5 },
+      { name: 'heal', src: ['/assets/sounds/powerUp7.mp3'], volume: 0.5 },
       { name: 'land', src: ['/assets/sounds/pepSound1.mp3'], volume: 0.15 },
     ];
 

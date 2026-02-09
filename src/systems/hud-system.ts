@@ -8,6 +8,7 @@
  * Displays:
  *   - Player health bar (top-left corner)
  *   - Scrap counter (below health bar)
+ *   - Active consumable icons ([SH] shield, [MED] medkit)
  */
 
 import { Text, TextStyle } from 'pixi.js';
@@ -24,12 +25,21 @@ const SCRAP_STYLE = new TextStyle({
   fontWeight: 'bold',
 });
 
+const CONSUMABLE_STYLE = new TextStyle({
+  fontFamily: 'monospace',
+  fontSize: 12,
+  fill: 0x44ffff,
+  fontWeight: 'bold',
+});
+
 export class HudSystem implements System {
   /** Runs just before rendering so health values are up-to-date. */
   readonly priority = 98;
 
   private readonly healthBar: HealthBar;
   private readonly scrapText: Text;
+  private readonly shieldIcon: Text;
+  private readonly medkitIcon: Text;
   private readonly gameState: GameState;
 
   /**
@@ -46,6 +56,25 @@ export class HudSystem implements System {
     this.scrapText.x = 16;
     this.scrapText.y = 50;
     uiContainer.addChild(this.scrapText);
+
+    // Consumable indicators (hidden when inactive)
+    this.shieldIcon = new Text({ text: '[SH]', style: CONSUMABLE_STYLE });
+    this.shieldIcon.x = 16;
+    this.shieldIcon.y = 72;
+    this.shieldIcon.visible = false;
+    uiContainer.addChild(this.shieldIcon);
+
+    this.medkitIcon = new Text({
+      text: '[MED]',
+      style: new TextStyle({
+        fontFamily: 'monospace', fontSize: 12,
+        fill: 0x44ff44, fontWeight: 'bold',
+      }),
+    });
+    this.medkitIcon.x = 56;
+    this.medkitIcon.y = 72;
+    this.medkitIcon.visible = false;
+    uiContainer.addChild(this.medkitIcon);
   }
 
   /**
@@ -64,5 +93,9 @@ export class HudSystem implements System {
 
     this.healthBar.update(health.current, health.max);
     this.scrapText.text = `SCRAP: ${this.gameState.scrap}`;
+
+    // Show/hide consumable icons based on current state
+    this.shieldIcon.visible = this.gameState.shieldCharge;
+    this.medkitIcon.visible = this.gameState.repairKit;
   }
 }
