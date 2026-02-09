@@ -1,12 +1,7 @@
 /**
- * DamageSystem -- handles contact damage, invincibility timers,
- * knockback impulses, and enemy death marking.
- *
- * Priority 40: runs after ProjectileSystem (35) so projectile hits
- * are already applied, but before RenderSystem (100).
- *
- * Entity destruction is delegated to the centralised EntityManager,
- * which processes the destroy queue at the start of each frame.
+ * DamageSystem -- contact damage, invincibility, knockback, consumable
+ * effects (shield charge / repair kit), and enemy death + scrap rewards.
+ * Priority 40: after ProjectileSystem (35), before RenderSystem (100).
  */
 
 import type { System } from '../core/types.js';
@@ -46,13 +41,6 @@ export class DamageSystem implements System {
   private readonly gameState: GameState;
   private readonly worldContainer: Container;
 
-  /**
-   * @param physicsCtx      - shared physics context for knockback impulses
-   * @param soundManager    - audio manager for hit/death sounds
-   * @param entityManager   - centralised manager for deferred entity destruction
-   * @param gameState       - persistent player state (scrap, weapon)
-   * @param worldContainer  - world display container (used later for floating text)
-   */
   constructor(
     physicsCtx: PhysicsContext,
     soundManager: SoundManager,
@@ -67,15 +55,6 @@ export class DamageSystem implements System {
     this.worldContainer = worldContainer;
   }
 
-  /**
-   * Each frame:
-   * 1. Decrement invincibility timers on all entities with health.
-   * 2. Check contact damage between enemies and the player.
-   * 3. Queue dead enemies for destruction via EntityManager.
-   *
-   * @param world - the ECS world to query / mutate
-   * @param dt    - elapsed time since last frame (seconds)
-   */
   update(world: World, dt: number): void {
     // 1. Update invincibility timers for all entities with health
     this.updateInvincibilityTimers(world, dt);
@@ -86,10 +65,6 @@ export class DamageSystem implements System {
     // 3. Queue dead enemies for destruction
     this.queueDeadEnemies(world);
   }
-
-  // -----------------------------------------------------------------------
-  // Invincibility timers
-  // -----------------------------------------------------------------------
 
   /** Decrement invincibleTimer on every health component, clamp to 0. */
   private updateInvincibilityTimers(world: World, dt: number): void {
@@ -105,14 +80,9 @@ export class DamageSystem implements System {
     }
   }
 
-  // -----------------------------------------------------------------------
-  // Contact damage
-  // -----------------------------------------------------------------------
-
   /**
-   * For each enemy, check pixel distance to the player.
-   * If within CONTACT_DISTANCE and player is not invincible,
-   * apply damage, set invincibility, and apply knockback.
+   * Check contact damage between enemies and the player.
+   * Handles shield charge absorption and repair kit auto-heal.
    */
   private checkContactDamage(world: World): void {
     // Find player
@@ -152,6 +122,20 @@ export class DamageSystem implements System {
       // Player must not be invincible
       if (playerHealth.invincibleTimer > 0) continue;
 
+      // Shield Charge: absorb the hit entirely, consume the shield
+      if (this.gameState.shieldCharge) {
+        this.gameState.shieldCharge = false;
+        this.soundManager.play('shield-break');
+        spawnFloatText(
+          this.worldContainer,
+          playerTransform.x, playerTransform.y - 30,
+          'SHIELD!',
+        );
+        playerHealth.invincibleTimer = INVINCIBILITY_DURATION;
+        this.applyKnockback(playerPb.bodyHandle, dx, dy);
+        break;
+      }
+
       // Apply contact damage
       playerHealth.current = Math.max(
         0,
@@ -167,6 +151,22 @@ export class DamageSystem implements System {
       // Apply knockback impulse (push player away from enemy)
       this.applyKnockback(playerPb.bodyHandle, dx, dy);
 
+      // Repair Kit: auto-heal to full if HP drops below 25%
+      if (
+        this.gameState.repairKit
+        && playerHealth.current > 0
+        && playerHealth.current / playerHealth.max < 0.25
+      ) {
+        this.gameState.repairKit = false;
+        playerHealth.current = playerHealth.max;
+        this.soundManager.play('heal');
+        spawnFloatText(
+          this.worldContainer,
+          playerTransform.x, playerTransform.y - 30,
+          'REPAIRED!',
+        );
+      }
+
       // Check for player death
       if (playerHealth.current <= 0) {
         playerHealth.isDead = true;
@@ -177,14 +177,7 @@ export class DamageSystem implements System {
     }
   }
 
-  /**
-   * Apply a horizontal knockback impulse to the player body,
-   * pushing them away from the enemy.
-   *
-   * @param bodyHandle - Rapier body handle for the player
-   * @param dx         - X distance from player to enemy (pixels)
-   * @param dy         - Y distance from player to enemy (pixels)
-   */
+  /** Apply knockback impulse pushing player away from enemy. */
   private applyKnockback(
     bodyHandle: number,
     dx: number,
@@ -201,15 +194,7 @@ export class DamageSystem implements System {
     body.applyImpulse({ x: knockX, y: KNOCKBACK_IMPULSE_Y }, true);
   }
 
-  // -----------------------------------------------------------------------
-  // Enemy death
-  // -----------------------------------------------------------------------
-
-  /**
-   * Find dead enemies and queue them for destruction via EntityManager.
-   * The EntityManager will handle physics/display/ECS cleanup at the
-   * start of the next frame.
-   */
+  /** Queue dead enemies for destruction and award scrap. */
   private queueDeadEnemies(world: World): void {
     const enemies = world.query('enemy', 'health');
 
@@ -242,10 +227,7 @@ export class DamageSystem implements System {
     }
   }
 
-  /**
-   * Return the scrap reward for killing an enemy of the given type.
-   * Tougher enemies are worth more scrap.
-   */
+  /** Scrap reward by enemy type. Tougher enemies = more scrap. */
   private getScrapValue(enemyType: string): number {
     switch (enemyType) {
       case 'walker': return 5;
