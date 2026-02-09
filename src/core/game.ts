@@ -145,7 +145,6 @@ export class Game {
     this.hubScreen = null;
     this.loadLevel(levelData);
     this.currentScene = 'gameplay';
-    console.log(`[Game] Started: ${levelData.name}`);
   }
 
   /** Called by DeathRespawnSystem after death delay. */
@@ -192,9 +191,8 @@ export class Game {
 
     // Rebuild systems (they hold level-specific state)
     this.systems = [];
-    const bounds = {
-      x: 0, y: 0, width: levelData.width, height: levelData.height,
-    };
+    const bounds = { x: 0, y: 0, width: levelData.width, height: levelData.height };
+    const cameraSystem = new CameraSystem(this.worldContainer, bounds);
 
     this.addSystem(this.starfield);
     this.addSystem(this.parallaxBg!); // non-null: created above
@@ -202,7 +200,9 @@ export class Game {
     this.addSystem(new BossTriggerSystem(
       this.physicsCtx, this.worldContainer, levelData, this.soundManager,
     ));
-    this.addSystem(new BossAISystem(this.physicsCtx, this.worldContainer, this.soundManager));
+    this.addSystem(new BossAISystem(
+      this.physicsCtx, this.worldContainer, this.soundManager, cameraSystem,
+    ));
     this.addSystem(new EnemyAISystem(this.physicsCtx, this.worldContainer));
     this.addSystem(new PlayerMovementSystem(
       this.physicsCtx, this.inputManager, this.soundManager,
@@ -230,7 +230,7 @@ export class Game {
     this.addSystem(new HudSystem(this.uiContainer, this.gameState));
     this.addSystem(new AnimationSystem());
     this.addSystem(new EffectsSystem());
-    this.addSystem(new CameraSystem(this.worldContainer, bounds));
+    this.addSystem(cameraSystem);
     this.addSystem(new RenderSystem(this.worldContainer));
   }
 

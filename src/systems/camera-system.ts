@@ -48,6 +48,13 @@ export class CameraSystem implements System {
    */
   private readonly smoothing: number;
 
+  /** Screen shake: maximum pixel offset. */
+  private shakeAmplitude = 0;
+  /** Screen shake: total duration in seconds. */
+  private shakeDuration = 0;
+  /** Screen shake: time elapsed since shake started. */
+  private shakeElapsed = 0;
+
   /**
    * @param worldContainer - the PixiJS Container representing the game world
    * @param bounds         - the level bounds in pixels
@@ -69,6 +76,17 @@ export class CameraSystem implements System {
    */
   setBounds(bounds: LevelBounds): void {
     this.bounds = bounds;
+  }
+
+  /**
+   * Trigger a screen shake effect. Decays linearly over the duration.
+   * @param amplitude - maximum pixel offset per axis
+   * @param duration  - shake duration in seconds
+   */
+  shake(amplitude: number, duration: number): void {
+    this.shakeAmplitude = amplitude;
+    this.shakeDuration = duration;
+    this.shakeElapsed = 0;
   }
 
   /**
@@ -99,6 +117,15 @@ export class CameraSystem implements System {
     // Clamp to level bounds so the camera doesn't show beyond edges
     this.worldContainer.x = this.clampX(newX);
     this.worldContainer.y = this.clampY(newY);
+
+    // Apply screen shake offset (after clamping so shake can push past edges)
+    if (this.shakeElapsed < this.shakeDuration) {
+      this.shakeElapsed += dt;
+      // Linear decay: full amplitude at start, zero at end
+      const decay = 1 - this.shakeElapsed / this.shakeDuration;
+      this.worldContainer.x += (Math.random() * 2 - 1) * this.shakeAmplitude * decay;
+      this.worldContainer.y += (Math.random() * 2 - 1) * this.shakeAmplitude * decay;
+    }
   }
 
   // -----------------------------------------------------------------------

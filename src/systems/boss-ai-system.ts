@@ -22,6 +22,7 @@ import {
   handleCooldown,
 } from './boss-ai-behaviours.js';
 import type { SoundManager } from '../audio/sound-manager.js';
+import type { CameraSystem } from './camera-system.js';
 import { trySpawnMinions } from './boss-phase3.js';
 
 /** Phase 2 HP threshold (60% of 300). */
@@ -36,15 +37,18 @@ export class BossAISystem implements System {
   private readonly physicsCtx: PhysicsContext;
   private readonly worldContainer: Container;
   private readonly soundManager: SoundManager;
+  private readonly camera: CameraSystem;
 
   constructor(
     physicsCtx: PhysicsContext,
     worldContainer: Container,
     soundManager: SoundManager,
+    camera: CameraSystem,
   ) {
     this.physicsCtx = physicsCtx;
     this.worldContainer = worldContainer;
     this.soundManager = soundManager;
+    this.camera = camera;
   }
 
   update(world: World, dt: number): void {
@@ -72,6 +76,7 @@ export class BossAISystem implements System {
       if (!body) continue;
 
       // Delegate to state handlers
+      const prevState = boss.attackState;
       switch (boss.attackState) {
         case 'patrol':
           handlePatrol(
@@ -96,6 +101,11 @@ export class BossAISystem implements System {
           break;
       }
 
+      // Screen shake when boss finishes a charge (wall impact)
+      if (prevState === 'charging' && boss.attackState === 'cooldown') {
+        this.camera.shake(8, 0.3);
+      }
+
       // Phase 3: attempt minion spawning each frame
       trySpawnMinions(
         boss, transform, world, this.physicsCtx,
@@ -112,9 +122,11 @@ export class BossAISystem implements System {
     if (boss.phase === 1 && currentHp <= PHASE2_HP) {
       boss.phase = 2;
       this.soundManager.play('boss-phase-up');
+      this.camera.shake(6, 0.5);
     } else if (boss.phase === 2 && currentHp <= PHASE3_HP) {
       boss.phase = 3;
       this.soundManager.play('boss-phase-up');
+      this.camera.shake(10, 0.8);
     }
   }
 
