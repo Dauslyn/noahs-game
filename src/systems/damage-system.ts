@@ -18,6 +18,7 @@ import type { EntityManager } from '../core/entity-manager.js';
 import { addScrap } from '../core/game-state.js';
 import type { GameState } from '../core/game-state.js';
 import type { Container } from 'pixi.js';
+import { spawnFloatText } from '../ui/float-text.js';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -226,6 +227,17 @@ export class DamageSystem implements System {
           ? this.getScrapValue(enemy.enemyType)
           : 5;
         addScrap(this.gameState, scrapAmount);
+
+        // Spawn floating "+N" text at enemy position for visual feedback
+        const transform = world.getComponent(entity, 'transform');
+        if (transform) {
+          spawnFloatText(
+            this.worldContainer,
+            transform.x,
+            transform.y - 20,
+            `+${scrapAmount}`,
+          );
+        }
       }
     }
   }
