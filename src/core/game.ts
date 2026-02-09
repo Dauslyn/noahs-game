@@ -232,7 +232,7 @@ export class Game {
       this.soundManager,
       () => this.returnToPlanetSelect(),
     ));
-    this.addSystem(new HudSystem(this.uiContainer));
+    this.addSystem(new HudSystem(this.uiContainer, this.gameState));
     this.addSystem(new AnimationSystem());
     this.addSystem(new EffectsSystem());
     this.addSystem(new CameraSystem(this.worldContainer, bounds));
