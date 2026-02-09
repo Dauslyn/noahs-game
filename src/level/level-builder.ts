@@ -21,6 +21,7 @@ import {
 } from '../components/index.js';
 import type { LevelData, PlatformDef } from './level-data.js';
 import { renderPlatformTiled } from './tile-renderer.js';
+import { getBiomeConfig } from './biome-config.js';
 
 // ---------------------------------------------------------------------------
 // Builder
@@ -47,8 +48,9 @@ export function buildLevel(
   physicsCtx: PhysicsContext,
   worldContainer: Container,
 ): void {
+  const biome = getBiomeConfig(levelData.environmentTheme);
   for (const platform of levelData.platforms) {
-    buildPlatform(platform, world, physicsCtx, worldContainer);
+    buildPlatform(platform, world, physicsCtx, worldContainer, biome.platformTint);
   }
 }
 
@@ -65,6 +67,7 @@ function buildPlatform(
   world: World,
   physicsCtx: PhysicsContext,
   worldContainer: Container,
+  tint: number,
 ): void {
   const entity = world.createEntity();
 
@@ -87,7 +90,7 @@ function buildPlatform(
   world.addComponent(entity, createPhysicsBody(body.handle, 'static'));
 
   // -- Tiled platform visual --
-  const visual = renderPlatformTiled(def.width, def.height);
+  const visual = renderPlatformTiled(def.width, def.height, tint);
   worldContainer.addChild(visual);
   world.addComponent(entity, createSprite(visual, def.width, def.height));
 

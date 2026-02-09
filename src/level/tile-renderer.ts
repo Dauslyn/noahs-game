@@ -143,6 +143,7 @@ function pickTile(
 export function renderPlatformTiled(
   width: number,
   height: number,
+  tint: number = 0xffffff,
 ): Container {
   const container = new Container();
 
@@ -185,6 +186,8 @@ export function renderPlatformTiled(
       if (remainW < TILE_SIZE) sprite.width = remainW;
       if (remainH < TILE_SIZE) sprite.height = remainH;
 
+      // Apply biome tint to the tile
+      sprite.tint = tint;
       container.addChild(sprite);
     }
   }
