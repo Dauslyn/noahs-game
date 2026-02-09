@@ -53,6 +53,16 @@ const TEXTURE_MANIFEST: Record<string, string> = {
   // Backgrounds (parallax layers)
   'bg-sky': `${ANSIMUZ_BASE}/Environments/alien-environment/PNG/layers/background.png`,
   'bg-structures': `${ANSIMUZ_BASE}/Environments/alien-environment/PNG/layers/back-structures.png`,
+
+  // Another-world biome backgrounds
+  'bg-another-world-sky': `${ANSIMUZ_BASE}/Environments/another-world/PNG/layered/sky.png`,
+  'bg-another-world-towers': `${ANSIMUZ_BASE}/Environments/another-world/PNG/layered/back-towers.png`,
+
+  // Cyberpunk biome background
+  'bg-cyberpunk-back': `${ANSIMUZ_BASE}/Environments/cyberpunk-corridor-files/PNG/layers/back.png`,
+
+  // Sci-fi interior biome background
+  'bg-interior': `${ANSIMUZ_BASE}/Environments/sci-fi-interior-paltform/PNG/background.png`,
 };
 
 // ---------------------------------------------------------------------------
