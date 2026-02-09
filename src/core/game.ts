@@ -1,10 +1,6 @@
 /**
- * Game – top-level orchestrator that wires together PixiJS, Rapier,
- * the ECS world, input, systems, level, and player.
- *
- * Usage:
- *   const game = new Game();
- *   await game.init();
+ * Game – top-level orchestrator. Supports scene transitions:
+ * planet-select ↔ gameplay. Usage: `new Game().init()`
  */
 
 import { Application, Container } from 'pixi.js';
@@ -14,6 +10,9 @@ import { PhysicsContext } from './physics.js';
 import { EntityManager } from './entity-manager.js';
 import { SCREEN_WIDTH, SCREEN_HEIGHT } from './constants.js';
 import { InputManager } from '../input/input-manager.js';
+import { loadAllAssets } from './asset-loader.js';
+import { LoadingScreen } from '../ui/loading-screen.js';
+import { PlanetSelectScreen } from '../ui/planet-select-screen.js';
 import { PhysicsSystem } from '../systems/physics-system.js';
 import { PlayerMovementSystem } from '../systems/player-movement-system.js';
 import { CameraSystem } from '../systems/camera-system.js';
@@ -25,10 +24,13 @@ import { EnemyAISystem } from '../systems/enemy-ai-system.js';
 import { DamageSystem } from '../systems/damage-system.js';
 import { DeathRespawnSystem } from '../systems/death-respawn-system.js';
 import { StarfieldSystem } from '../systems/starfield-system.js';
+import { ParallaxBgSystem } from '../systems/parallax-bg-system.js';
 import { HudSystem } from '../systems/hud-system.js';
 import { SoundManager } from '../audio/sound-manager.js';
 import { EffectsSystem, createWorldBloom } from '../systems/effects-system.js';
-import { PROTOTYPE_LEVEL } from '../level/level-data.js';
+import { AnimationSystem } from '../systems/animation-system.js';
+import type { LevelData } from '../level/level-data.js';
+import { ALL_LEVELS } from '../level/extra-levels.js';
 import { buildLevel } from '../level/level-builder.js';
 import { createPlayerEntity } from '../entities/create-player.js';
 import { createMechEntity } from '../entities/create-mech.js';
@@ -38,7 +40,7 @@ import {
   createTurretEnemy,
 } from '../entities/create-enemy.js';
 
-/** Dark blue background color for the space theme. */
+type Scene = 'planet-select' | 'gameplay';
 const BACKGROUND_COLOR = 0x0a0a2e;
 
 export class Game {
@@ -48,21 +50,17 @@ export class Game {
   private entityManager!: EntityManager;
   private systems: System[] = [];
   private inputManager!: InputManager;
+  private soundManager!: SoundManager;
+  private currentScene: Scene = 'planet-select';
+  private planetSelect: PlanetSelectScreen | null = null;
+  private starfield!: StarfieldSystem;
+  private parallaxBg!: ParallaxBgSystem;
 
-  /** World-space container (moves with the camera). */
   public worldContainer!: Container;
-
-  /** UI-space container (fixed on screen). */
   public uiContainer!: Container;
 
-  /**
-   * Initialise all subsystems and start the game loop.
-   *
-   * Must be awaited because PixiJS and Rapier WASM both require
-   * asynchronous initialisation.
-   */
   async init(): Promise<void> {
-    // 1. Init PixiJS
+    // 1. PixiJS
     this.app = new Application();
     await this.app.init({
       width: SCREEN_WIDTH,
@@ -73,136 +71,175 @@ export class Game {
       resolution: window.devicePixelRatio || 1,
       autoDensity: true,
     });
+    const el = document.getElementById('game-container');
+    if (!el) throw new Error('Missing #game-container');
+    el.appendChild(this.app.canvas);
 
-    const container = document.getElementById('game-container');
-    if (!container) {
-      throw new Error('Could not find #game-container element in the DOM');
-    }
-    container.appendChild(this.app.canvas);
+    // 1b. Loading screen
+    const loading = new LoadingScreen();
+    this.app.stage.addChild(loading.container);
+    await loadAllAssets((p) => loading.updateProgress(p));
+    loading.hide();
 
-    // 2. Init Rapier2D (WASM)
+    // 2. Physics (WASM init once)
     this.physicsCtx = await PhysicsContext.create();
 
-    // 3. Create ECS world
+    // 3. ECS world
     this.world = new World();
 
-    // 4a. Starfield (added first so it renders behind everything)
-    const starfield = new StarfieldSystem(this.app.stage);
+    // 4. Background layers (persistent across scenes)
+    this.starfield = new StarfieldSystem(this.app.stage);
+    this.starfield.enabled = false;
+    this.starfield.setVisible(false);
+    this.parallaxBg = new ParallaxBgSystem(this.app.stage);
+    this.parallaxBg.setVisible(false);
 
-    // 4b. Stage hierarchy: worldContainer (camera-affected) + uiContainer (fixed)
+    // 5. Stage containers
     this.worldContainer = new Container();
     this.uiContainer = new Container();
     this.app.stage.addChild(this.worldContainer);
     this.app.stage.addChild(this.uiContainer);
-
-    // 4c. Apply subtle bloom to the world container for sci-fi atmosphere
     this.worldContainer.filters = [createWorldBloom()];
 
-    // 4d. Centralised entity destruction manager
-    this.entityManager = new EntityManager(this.physicsCtx, this.worldContainer);
-
-    // 5. Input
+    // 6. Core managers
+    this.entityManager = new EntityManager(
+      this.physicsCtx, this.worldContainer,
+    );
     this.inputManager = new InputManager();
+    this.soundManager = new SoundManager();
+    this.soundManager.loadAll();
 
-    // 5b. Audio
-    const soundManager = new SoundManager();
-    soundManager.loadAll();
+    // 7. Game loop (always ticks; gameplay systems only run in gameplay)
+    this.app.ticker.add((ticker) => {
+      const dt = Math.min(ticker.deltaMS / 1000, 0.1);
+      if (this.currentScene === 'gameplay') {
+        this.entityManager.processDestroyQueue(this.world);
+        for (const system of this.systems) {
+          system.update(this.world, dt);
+        }
+        this.inputManager.update();
+      }
+    });
 
-    // 6. Build level
-    const levelData = PROTOTYPE_LEVEL;
+    // 8. Show planet select
+    this.showPlanetSelect();
+    console.log("[Noah's Game] Ready — select a planet");
+  }
+
+  // -----------------------------------------------------------------------
+  // Scene transitions
+  // -----------------------------------------------------------------------
+
+  private showPlanetSelect(): void {
+    this.currentScene = 'planet-select';
+    this.parallaxBg.setVisible(false);
+
+    this.planetSelect = new PlanetSelectScreen(
+      ALL_LEVELS,
+      (level) => this.startLevel(level),
+    );
+    this.app.stage.addChild(this.planetSelect.container);
+  }
+
+  private startLevel(levelData: LevelData): void {
+    this.planetSelect?.hide();
+    this.planetSelect = null;
+    this.loadLevel(levelData);
+    this.currentScene = 'gameplay';
+    this.parallaxBg.setVisible(true);
+    console.log(`[Game] Started: ${levelData.name}`);
+  }
+
+  /** Called by DeathRespawnSystem after death delay. */
+  returnToPlanetSelect(): void {
+    this.unloadLevel();
+    this.showPlanetSelect();
+  }
+
+  // -----------------------------------------------------------------------
+  // Level lifecycle
+  // -----------------------------------------------------------------------
+
+  private loadLevel(levelData: LevelData): void {
+    // Fresh physics world (WASM stays initialised)
+    this.physicsCtx = PhysicsContext.resetWorld(this.physicsCtx);
+    this.entityManager.setPhysicsContext(this.physicsCtx);
+
     buildLevel(levelData, this.world, this.physicsCtx, this.worldContainer);
 
-    // 7. Create player at the level's spawn point
     const playerEntity = createPlayerEntity(
-      this.world,
-      this.physicsCtx,
-      this.worldContainer,
-      levelData.playerSpawn.x,
-      levelData.playerSpawn.y,
+      this.world, this.physicsCtx, this.worldContainer,
+      levelData.playerSpawn.x, levelData.playerSpawn.y,
     );
-
-    // 7b. Create mech companion orbiting the player
     createMechEntity(
-      this.world,
-      this.worldContainer,
-      playerEntity,
-      levelData.playerSpawn.x,
-      levelData.playerSpawn.y,
+      this.world, this.worldContainer, playerEntity,
+      levelData.playerSpawn.x, levelData.playerSpawn.y,
     );
 
-    // 7c. Spawn enemies at level spawn points
     for (const sp of levelData.spawnPoints) {
       switch (sp.type) {
         case 'enemy-walker':
-          createWalkerEnemy(this.world, this.physicsCtx, this.worldContainer, sp.x, sp.y);
+          createWalkerEnemy(
+            this.world, this.physicsCtx, this.worldContainer, sp.x, sp.y,
+          );
           break;
         case 'enemy-flyer':
-          createFlyerEnemy(this.world, this.physicsCtx, this.worldContainer, sp.x, sp.y);
+          createFlyerEnemy(
+            this.world, this.physicsCtx, this.worldContainer, sp.x, sp.y,
+          );
           break;
         case 'enemy-turret':
-          createTurretEnemy(this.world, this.physicsCtx, this.worldContainer, sp.x, sp.y);
+          createTurretEnemy(
+            this.world, this.physicsCtx, this.worldContainer, sp.x, sp.y,
+          );
           break;
       }
     }
 
-    // 8. Register systems (sorted by priority after each add)
-    const levelBounds = {
-      x: 0,
-      y: 0,
-      width: levelData.width,
-      height: levelData.height,
+    // Rebuild systems (they hold level-specific state)
+    this.systems = [];
+    const bounds = {
+      x: 0, y: 0, width: levelData.width, height: levelData.height,
     };
 
-    this.addSystem(starfield);
+    this.addSystem(this.starfield);
+    this.addSystem(this.parallaxBg);
     this.addSystem(new PhysicsSystem(this.physicsCtx));
     this.addSystem(new EnemyAISystem(this.physicsCtx, this.worldContainer));
-    this.addSystem(new PlayerMovementSystem(this.physicsCtx, this.inputManager, soundManager));
+    this.addSystem(new PlayerMovementSystem(
+      this.physicsCtx, this.inputManager, this.soundManager,
+    ));
     this.addSystem(new MechFollowSystem());
-    this.addSystem(new WeaponSystem(this.physicsCtx, this.worldContainer, soundManager));
+    this.addSystem(new WeaponSystem(
+      this.physicsCtx, this.worldContainer, this.soundManager,
+    ));
     this.addSystem(new ProjectileSystem(this.entityManager));
-    this.addSystem(new DamageSystem(this.physicsCtx, soundManager, this.entityManager));
+    this.addSystem(new DamageSystem(
+      this.physicsCtx, this.soundManager, this.entityManager,
+    ));
     this.addSystem(new DeathRespawnSystem(
-      this.physicsCtx,
-      this.worldContainer,
-      levelData.playerSpawn,
-      levelData.spawnPoints,
-      soundManager,
+      this.physicsCtx, this.worldContainer,
+      levelData.playerSpawn, levelData.spawnPoints,
+      this.soundManager,
+      () => this.returnToPlanetSelect(),
     ));
     this.addSystem(new HudSystem(this.uiContainer));
+    this.addSystem(new AnimationSystem());
     this.addSystem(new EffectsSystem());
-    this.addSystem(new CameraSystem(this.worldContainer, levelBounds));
+    this.addSystem(new CameraSystem(this.worldContainer, bounds));
     this.addSystem(new RenderSystem(this.worldContainer));
-
-    // 9. Start the game loop
-    this.app.ticker.add((ticker) => {
-      // Cap dt to prevent physics explosion after tab-away
-      const dt = Math.min(ticker.deltaMS / 1000, 0.1);
-
-      // Process deferred entity destruction BEFORE systems run
-      // to avoid stale references during iteration
-      this.entityManager.processDestroyQueue(this.world);
-
-      for (const system of this.systems) {
-        system.update(this.world, dt);
-      }
-
-      // Clear per-frame input state AFTER systems have read it
-      this.inputManager.update();
-    });
-
-    console.log(
-      `[Noah's Game] Initialized – ` +
-        `${this.world.entityCount} entities, ` +
-        `${this.systems.length} systems`,
-    );
   }
 
-  /**
-   * Register a system and keep the array sorted by priority (low first).
-   *
-   * @param system - the system to add
-   */
-  addSystem(system: System): void {
+  private unloadLevel(): void {
+    this.systems = [];
+    this.entityManager.destroyAll(this.world);
+    this.worldContainer.removeChildren();
+    this.uiContainer.removeChildren();
+    this.worldContainer.x = 0;
+    this.worldContainer.y = 0;
+  }
+
+  private addSystem(system: System): void {
     this.systems.push(system);
     this.systems.sort((a, b) => a.priority - b.priority);
   }

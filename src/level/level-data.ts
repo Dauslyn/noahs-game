@@ -37,6 +37,8 @@ export interface SpawnPointDef {
 export interface LevelData {
   /** Human-readable level name. */
   name: string;
+  /** Difficulty label shown on planet select. */
+  difficulty: 'Easy' | 'Medium' | 'Hard';
   /** Total level width (pixels). */
   width: number;
   /** Total level height (pixels). */
@@ -62,7 +64,8 @@ export interface LevelData {
  *   - Staggered floating platforms at varying heights
  */
 export const PROTOTYPE_LEVEL: LevelData = {
-  name: 'Prototype Station',
+  name: 'Zeta Station',
+  difficulty: 'Easy',
   width: 2560,
   height: 1440,
 

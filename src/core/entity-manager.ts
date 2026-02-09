@@ -28,7 +28,7 @@ export class EntityManager {
   /** Set of entities queued for destruction (prevents duplicates). */
   private readonly destroyQueue = new Set<Entity>();
 
-  private readonly physicsCtx: PhysicsContext;
+  private physicsCtx: PhysicsContext;
   private readonly worldContainer: Container;
 
   /**
@@ -70,9 +70,31 @@ export class EntityManager {
   }
 
   /**
+   * Immediately destroy ALL living entities in the world.
+   * Used during level transitions to fully tear down the current scene.
+   *
+   * @param world - the ECS world to clear
+   */
+  destroyAll(world: World): void {
+    // Snapshot IDs first — destroyEntity mutates the world during iteration
+    const allIds = [...world.allEntities()];
+    for (const entity of allIds) {
+      this.destroyEntity(world, entity);
+    }
+    this.destroyQueue.clear();
+  }
+
+  /**
    * Returns the number of entities currently queued for destruction.
    * Useful for debugging / metrics.
    */
+  /**
+   * Update the physics context reference after a world reset.
+   */
+  setPhysicsContext(ctx: PhysicsContext): void {
+    this.physicsCtx = ctx;
+  }
+
   get pendingCount(): number {
     return this.destroyQueue.size;
   }

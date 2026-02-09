@@ -106,6 +106,18 @@ export class PhysicsContext {
     this.colliderToEntity = new Map<number, Entity>();
   }
 
+  /**
+   * Drop the current Rapier world and create a fresh one.
+   * WASM stays initialised — only the simulation state resets.
+   *
+   * @returns a new PhysicsContext sharing the same RAPIER module
+   */
+  static resetWorld(existing: PhysicsContext): PhysicsContext {
+    existing.world.free();
+    const world = new RAPIER.World({ x: 0.0, y: GRAVITY });
+    return new PhysicsContext(existing.rapier, world);
+  }
+
   // -----------------------------------------------------------------------
   // Factory
   // -----------------------------------------------------------------------

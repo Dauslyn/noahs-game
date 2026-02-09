@@ -47,12 +47,16 @@ export class DeathRespawnSystem implements System {
   private readonly worldContainer: Container;
   private readonly soundManager: SoundManager;
 
+  /** Called after death delay to transition out of gameplay. */
+  private readonly onDeathComplete: (() => void) | null;
+
   /**
    * @param physicsCtx     - shared Rapier physics context
    * @param worldContainer - PixiJS world-space container for visuals
    * @param playerSpawn    - pixel position where the player respawns
    * @param spawnPoints    - enemy spawn definitions from the level data
    * @param soundManager   - audio manager for death sound
+   * @param onDeathComplete - callback when death delay ends (scene transition)
    */
   constructor(
     physicsCtx: PhysicsContext,
@@ -60,11 +64,13 @@ export class DeathRespawnSystem implements System {
     playerSpawn: { x: number; y: number },
     spawnPoints: SpawnPointDef[],
     soundManager: SoundManager,
+    onDeathComplete?: () => void,
   ) {
     this.physicsCtx = physicsCtx;
     this.worldContainer = worldContainer;
     this.playerSpawn = playerSpawn;
     this.soundManager = soundManager;
+    this.onDeathComplete = onDeathComplete ?? null;
     // Only keep enemy spawn points (filter out player type)
     this.enemySpawnPoints = spawnPoints.filter(
       (sp) => sp.type !== 'player',
@@ -102,7 +108,14 @@ export class DeathRespawnSystem implements System {
       this.respawnTimer -= dt;
 
       if (this.respawnTimer <= 0) {
-        this.triggerRespawn(world, player, health, pb, sprite);
+        if (this.onDeathComplete) {
+          // Scene transition: return to planet select
+          this.isPlayerDead = false;
+          this.onDeathComplete();
+        } else {
+          // Legacy: respawn in place
+          this.triggerRespawn(world, player, health, pb, sprite);
+        }
       }
     }
   }
