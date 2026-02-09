@@ -12,6 +12,7 @@ import type { BossComponent } from '../components/boss.js';
 import type { TransformComponent } from '../components/index.js';
 import type { SoundManager } from '../audio/sound-manager.js';
 import { createWalkerEnemy } from '../entities/create-enemy.js';
+import { spawnFlash } from '../effects/spawn-flash.js';
 
 // ---------------------------------------------------------------------------
 // Enrage constants (faster attack timings in Phase 3)
@@ -92,6 +93,7 @@ export function trySpawnMinions(
       world, physicsCtx, worldContainer,
       transform.x + offsetX, transform.y,
     );
+    spawnFlash(worldContainer, transform.x + offsetX, transform.y);
   }
 
   soundManager.play('minion-spawn');
