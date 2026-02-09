@@ -235,16 +235,17 @@ Equipping compatible components triggers synergy discovery.
 **Gate: Phase 1 must be fun before moving on.**
 **Status:** Core prototype works. Procedural sci-fi visuals in place. LDtk integration deferred to Phase 2. Sound files not yet generated.
 
-### Phase 2a: Visual & Audio Upgrade
-- [ ] Integrate free 32x32 sprite packs (player, mech, enemies, tileset)
-- [ ] Add parallax planet backgrounds
-- [ ] Add sound effects (free CC0 packs)
-- [ ] Asset loading screen
+### Phase 2a: Visual & Audio Upgrade ✅ COMPLETE (2026-02-08)
+- [x] Integrate free 32x32 sprite packs (player, mech, enemies, tileset)
+- [x] Add parallax planet backgrounds
+- [x] Add sound effects (free CC0 packs)
+- [x] Asset loading screen
 
-### Phase 2b: Multiple Planets
-- [ ] Scene/state manager (menu → planet → death → planet)
-- [ ] 2-3 planet levels with different biomes
-- [ ] Planet selection screen
+### Phase 2b: Multiple Planets (partially complete)
+- [x] Scene/state manager (planet-select → gameplay → death → planet-select)
+- [x] 3 planet levels (Zeta Station, Crystal Caverns, Neon Outpost)
+- [x] Planet selection screen
+- [ ] Different biomes/tilesets per planet (deferred to Phase 2b-2)
 
 ### Phase 2c: Loadout & Inventory
 - [ ] Mech loadout screen (equip/swap weapons)
