@@ -9,14 +9,9 @@ import { AnimatedSprite } from 'pixi.js';
 import type { Container } from 'pixi.js';
 import type { Entity } from '../core/types.js';
 import type { World } from '../core/world.js';
-import {
-  MECH_ORBIT_RADIUS,
-  MECH_ORBIT_SPEED,
-  LASER_DAMAGE,
-  LASER_FIRE_RATE,
-  LASER_RANGE,
-  LASER_SPEED,
-} from '../core/constants.js';
+import { MECH_ORBIT_RADIUS, MECH_ORBIT_SPEED } from '../core/constants.js';
+import { getWeaponDef } from '../combat/weapon-defs.js';
+import type { WeaponId } from '../combat/weapon-defs.js';
 import { getTexture, hasTexture } from '../core/asset-loader.js';
 import { extractFrames } from '../core/sprite-utils.js';
 import type { AnimationData } from '../components/animation-state.js';
@@ -58,6 +53,7 @@ const MECH_SCALE = 2.0;
 /**
  * Create the mech companion entity with orbit/weapon components
  * and an animated pixel-robot sprite. No physics body.
+ * @param weaponId - Which weapon the mech should equip from the registry.
  */
 export function createMechEntity(
   world: World,
@@ -65,8 +61,10 @@ export function createMechEntity(
   ownerEntity: Entity,
   x: number,
   y: number,
+  weaponId: WeaponId,
 ): Entity {
   const entity = world.createEntity();
+  const wpn = getWeaponDef(weaponId);
 
   // -- ECS components --
   world.addComponent(entity, createTransform(x, y));
@@ -76,7 +74,7 @@ export function createMechEntity(
   );
   world.addComponent(
     entity,
-    createWeapon(LASER_DAMAGE, LASER_FIRE_RATE, LASER_RANGE, LASER_SPEED),
+    createWeapon(wpn.damage, wpn.fireRate, wpn.range, wpn.projectileSpeed),
   );
 
   // -- Animated sprite --

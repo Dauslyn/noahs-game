@@ -58,22 +58,6 @@ export const MECH_ORBIT_RADIUS = 40;
 export const MECH_ORBIT_SPEED = 2;
 
 // ---------------------------------------------------------------------------
-// Weapons – Laser (default)
-// ---------------------------------------------------------------------------
-
-/** Projectile travel speed (m/s). */
-export const LASER_SPEED = 15;
-
-/** Damage per laser hit. */
-export const LASER_DAMAGE = 10;
-
-/** Shots per second. */
-export const LASER_FIRE_RATE = 3;
-
-/** Maximum travel distance before despawn (pixels). */
-export const LASER_RANGE = 300;
-
-// ---------------------------------------------------------------------------
 // Health & Combat
 // ---------------------------------------------------------------------------
 

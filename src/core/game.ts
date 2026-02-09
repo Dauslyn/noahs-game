@@ -173,9 +173,11 @@ export class Game {
       this.world, this.physicsCtx, this.worldContainer,
       levelData.playerSpawn.x, levelData.playerSpawn.y,
     );
+    // Hardcoded to 'laser' — will be replaced with gameState.equippedWeapon
     createMechEntity(
       this.world, this.worldContainer, playerEntity,
       levelData.playerSpawn.x, levelData.playerSpawn.y,
+      'laser',
     );
 
     for (const sp of levelData.spawnPoints) {
