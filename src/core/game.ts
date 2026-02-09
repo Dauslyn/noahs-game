@@ -25,6 +25,7 @@ import { DamageSystem } from '../systems/damage-system.js';
 import { DeathRespawnSystem } from '../systems/death-respawn-system.js';
 import { StarfieldSystem } from '../systems/starfield-system.js';
 import { ParallaxBgSystem } from '../systems/parallax-bg-system.js';
+import { getBiomeConfig } from '../level/biome-config.js';
 import { HudSystem } from '../systems/hud-system.js';
 import { SoundManager } from '../audio/sound-manager.js';
 import { EffectsSystem, createWorldBloom } from '../systems/effects-system.js';
@@ -54,7 +55,7 @@ export class Game {
   private currentScene: Scene = 'planet-select';
   private planetSelect: PlanetSelectScreen | null = null;
   private starfield!: StarfieldSystem;
-  private parallaxBg!: ParallaxBgSystem;
+  private parallaxBg: ParallaxBgSystem | null = null;
 
   public worldContainer!: Container;
   public uiContainer!: Container;
@@ -87,12 +88,10 @@ export class Game {
     // 3. ECS world
     this.world = new World();
 
-    // 4. Background layers (persistent across scenes)
+    // 4. Starfield (persistent across scenes; parallax created per-level)
     this.starfield = new StarfieldSystem(this.app.stage);
     this.starfield.enabled = false;
     this.starfield.setVisible(false);
-    this.parallaxBg = new ParallaxBgSystem(this.app.stage);
-    this.parallaxBg.setVisible(false);
 
     // 5. Stage containers
     this.worldContainer = new Container();
@@ -126,13 +125,14 @@ export class Game {
     console.log("[Noah's Game] Ready — select a planet");
   }
 
-  // -----------------------------------------------------------------------
-  // Scene transitions
-  // -----------------------------------------------------------------------
+  // — Scene transitions —
 
   private showPlanetSelect(): void {
     this.currentScene = 'planet-select';
-    this.parallaxBg.setVisible(false);
+
+    // Clean up previous parallax layers if any
+    this.parallaxBg?.destroy(this.app.stage);
+    this.parallaxBg = null;
 
     this.planetSelect = new PlanetSelectScreen(
       ALL_LEVELS,
@@ -146,7 +146,6 @@ export class Game {
     this.planetSelect = null;
     this.loadLevel(levelData);
     this.currentScene = 'gameplay';
-    this.parallaxBg.setVisible(true);
     console.log(`[Game] Started: ${levelData.name}`);
   }
 
@@ -156,9 +155,7 @@ export class Game {
     this.showPlanetSelect();
   }
 
-  // -----------------------------------------------------------------------
-  // Level lifecycle
-  // -----------------------------------------------------------------------
+  // — Level lifecycle —
 
   private loadLevel(levelData: LevelData): void {
     // Fresh physics world (WASM stays initialised)
@@ -166,6 +163,11 @@ export class Game {
     this.entityManager.setPhysicsContext(this.physicsCtx);
 
     buildLevel(levelData, this.world, this.physicsCtx, this.worldContainer);
+
+    // Create biome-specific parallax background
+    const biome = getBiomeConfig(levelData.environmentTheme);
+    this.parallaxBg?.destroy(this.app.stage);
+    this.parallaxBg = new ParallaxBgSystem(this.app.stage, biome);
 
     const playerEntity = createPlayerEntity(
       this.world, this.physicsCtx, this.worldContainer,
@@ -203,7 +205,7 @@ export class Game {
     };
 
     this.addSystem(this.starfield);
-    this.addSystem(this.parallaxBg);
+    this.addSystem(this.parallaxBg!); // non-null: created above
     this.addSystem(new PhysicsSystem(this.physicsCtx));
     this.addSystem(new EnemyAISystem(this.physicsCtx, this.worldContainer));
     this.addSystem(new PlayerMovementSystem(
