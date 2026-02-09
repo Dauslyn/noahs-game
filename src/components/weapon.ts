@@ -6,9 +6,12 @@
  */
 
 import type { Component } from '../core/types.js';
+import type { WeaponId } from '../combat/weapon-defs.js';
 
 export interface WeaponComponent extends Component {
   readonly type: 'weapon';
+  /** Which weapon definition this component uses. */
+  weaponId: WeaponId;
   /** Damage dealt per projectile hit. */
   damage: number;
   /** Shots per second. */
@@ -26,12 +29,14 @@ export interface WeaponComponent extends Component {
 
 /**
  * Create a WeaponComponent.
+ * @param weaponId        – which weapon def this component uses
  * @param damage          – damage per hit
  * @param fireRate        – shots per second
  * @param range           – max travel distance (pixels)
  * @param projectileSpeed – projectile speed (m/s)
  */
 export function createWeapon(
+  weaponId: WeaponId,
   damage: number,
   fireRate: number,
   range: number,
@@ -39,6 +44,7 @@ export function createWeapon(
 ): WeaponComponent {
   return {
     type: 'weapon',
+    weaponId,
     damage,
     fireRate,
     cooldownTimer: 0,

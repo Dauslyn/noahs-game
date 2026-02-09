@@ -11,6 +11,7 @@ import type { World } from '../core/world.js';
 import type { PhysicsContext } from '../core/physics.js';
 import type { Container } from 'pixi.js';
 import { createProjectileEntity } from '../entities/create-projectile.js';
+import { getWeaponDef } from '../combat/weapon-defs.js';
 import type { SoundManager } from '../audio/sound-manager.js';
 
 export class WeaponSystem implements System {
@@ -76,6 +77,9 @@ export class WeaponSystem implements System {
       const vx = dirX * weapon.projectileSpeed;
       const vy = dirY * weapon.projectileSpeed;
 
+      // Look up the weapon definition for projectile visual style
+      const wdef = getWeaponDef(weapon.weaponId);
+
       // Spawn the projectile at the mech's current position
       createProjectileEntity(
         world,
@@ -87,6 +91,7 @@ export class WeaponSystem implements System {
         vy,
         weapon.damage,
         entity,
+        wdef.style,
       );
 
       this.soundManager.play('laser');

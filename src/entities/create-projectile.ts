@@ -14,6 +14,8 @@ import type { World } from '../core/world.js';
 import type { PhysicsContext } from '../core/physics.js';
 import { toPhysicsPos } from '../core/physics.js';
 import { registerCollider } from '../core/collision-utils.js';
+import { PIXELS_PER_METER } from '../core/constants.js';
+import type { ProjectileStyle } from '../combat/weapon-defs.js';
 import {
   createTransform,
   createPhysicsBody,
@@ -39,7 +41,7 @@ const DEFAULT_LIFETIME = 2.0;
 // ---------------------------------------------------------------------------
 
 /**
- * Create a projectile entity with a dynamic sensor body, thin yellow sprite,
+ * Create a projectile entity with a dynamic sensor body, styled bolt sprite,
  * and projectile component for lifetime tracking.
  *
  * @param world          - the ECS world
@@ -51,6 +53,7 @@ const DEFAULT_LIFETIME = 2.0;
  * @param vy             - vertical velocity (m/s)
  * @param damage         - damage dealt on hit
  * @param ownerEntity    - entity that fired this projectile
+ * @param style          - optional visual style (defaults to yellow laser bolt)
  * @returns the newly created entity ID
  */
 export function createProjectileEntity(
@@ -63,8 +66,15 @@ export function createProjectileEntity(
   vy: number,
   damage: number,
   ownerEntity: Entity,
+  style?: ProjectileStyle,
 ): Entity {
   const entity = world.createEntity();
+
+  // Resolve visual dimensions and colours from style (with fallbacks)
+  const w = style?.width ?? BOLT_WIDTH;
+  const h = style?.height ?? BOLT_HEIGHT;
+  const core = style?.coreColor ?? 0xffffcc;
+  const glow = style?.glowColor ?? 0xffff00;
 
   // -- Physics body (dynamic, no gravity, locked rotation) --
   const physPos = toPhysicsPos(x, y);
@@ -77,8 +87,10 @@ export function createProjectileEntity(
   // Set initial velocity in m/s
   body.setLinvel({ x: vx, y: vy }, true);
 
-  // Small cuboid collider as a SENSOR (no physical collision response)
-  const colliderDesc = RAPIER.ColliderDesc.cuboid(0.08, 0.02).setSensor(true);
+  // Cuboid collider scaled to projectile dimensions (sensor, no physics response)
+  const colliderW = (w / 2) / PIXELS_PER_METER;
+  const colliderH = (h / 2) / PIXELS_PER_METER;
+  const colliderDesc = RAPIER.ColliderDesc.cuboid(colliderW, colliderH).setSensor(true);
   const collider = physicsCtx.world.createCollider(colliderDesc, body);
 
   // -- ECS components --
@@ -92,29 +104,26 @@ export function createProjectileEntity(
     createProjectile(damage, ownerEntity, DEFAULT_LIFETIME, speed),
   );
 
-  // -- Sci-fi laser bolt sprite --
+  // -- Sci-fi laser bolt sprite (styled per weapon) --
   const gfx = new Graphics();
 
   // Outer glow trail (wider, dimmer)
-  gfx.rect(-BOLT_WIDTH / 2 - 2, -BOLT_HEIGHT, BOLT_WIDTH + 4, BOLT_HEIGHT * 2);
-  gfx.fill({ color: 0xffff00, alpha: 0.3 });
+  gfx.rect(-w / 2 - 2, -h, w + 4, h * 2);
+  gfx.fill({ color: glow, alpha: 0.3 });
 
-  // Core beam (bright white-yellow)
-  gfx.rect(-BOLT_WIDTH / 2, -BOLT_HEIGHT / 2, BOLT_WIDTH, BOLT_HEIGHT);
-  gfx.fill(0xffffcc);
+  // Core beam
+  gfx.rect(-w / 2, -h / 2, w, h);
+  gfx.fill(core);
 
   // Hot centre line
-  gfx.rect(-BOLT_WIDTH / 2 + 1, -0.5, BOLT_WIDTH - 2, 1);
+  gfx.rect(-w / 2 + 1, -0.5, w - 2, 1);
   gfx.fill(0xffffff);
 
   // Rotate to match velocity direction: atan2(vy, vx)
   gfx.rotation = Math.atan2(vy, vx);
   worldContainer.addChild(gfx);
 
-  world.addComponent(
-    entity,
-    createSprite(gfx, BOLT_WIDTH, BOLT_HEIGHT),
-  );
+  world.addComponent(entity, createSprite(gfx, w, h));
 
   // -- Register collider for collision lookups --
   registerCollider(physicsCtx, collider.handle, entity);

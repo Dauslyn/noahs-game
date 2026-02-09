@@ -74,7 +74,7 @@ export function createMechEntity(
   );
   world.addComponent(
     entity,
-    createWeapon(wpn.damage, wpn.fireRate, wpn.range, wpn.projectileSpeed),
+    createWeapon(weaponId, wpn.damage, wpn.fireRate, wpn.range, wpn.projectileSpeed),
   );
 
   // -- Animated sprite --

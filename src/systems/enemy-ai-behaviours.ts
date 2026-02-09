@@ -12,6 +12,7 @@ import type { Container } from 'pixi.js';
 import type { TransformComponent, EnemyComponent } from '../components/index.js';
 import { pixelsToMeters } from '../core/physics.js';
 import { createProjectileEntity } from '../entities/create-projectile.js';
+import { getWeaponDef } from '../combat/weapon-defs.js';
 
 // ---------------------------------------------------------------------------
 // AI constants
@@ -204,6 +205,9 @@ export function updateTurret(
   const vx = dirX * weapon.projectileSpeed;
   const vy = dirY * weapon.projectileSpeed;
 
+  // Look up the weapon definition for projectile visual style
+  const wdef = getWeaponDef(weapon.weaponId);
+
   createProjectileEntity(
     world,
     physicsCtx,
@@ -214,6 +218,7 @@ export function updateTurret(
     vy,
     weapon.damage,
     entity,
+    wdef.style,
   );
 
   // Reset cooldown: 1 / fireRate seconds between shots
