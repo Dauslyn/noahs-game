@@ -209,10 +209,10 @@ export class DamageSystem implements System {
 
       if (health.isDead) {
         this.entityManager.markForDestruction(entity);
-        this.soundManager.play('enemy-death');
 
-        // Boss entities get special scrap reward (200)
+        // Boss entities get special scrap reward (200) and distinct death sound
         const bossComp = world.getComponent(entity, 'boss');
+        this.soundManager.play(bossComp ? 'boss-death' : 'enemy-death');
         const enemy = world.getComponent(entity, 'enemy');
         const scrapAmount = bossComp ? 200
           : enemy ? this.getScrapValue(enemy.enemyType) : 5;
