@@ -62,7 +62,14 @@ export class ProjectileSystem implements System {
         continue;
       }
 
-      // 2. Check proximity-based hit against enemies
+      // 2a. Boss-owned projectiles skip enemy hit loop (only target player)
+      const ownerBoss = world.getComponent(proj.ownerEntity, 'boss');
+      if (ownerBoss) {
+        this.checkBossProjectileHit(world, entity, proj, projTransform);
+        continue;
+      }
+
+      // 2b. Check proximity-based hit against enemies
       for (const enemyEntity of enemies) {
         const enemyTransform = world.getComponent(enemyEntity, 'transform');
         if (!enemyTransform) continue;
@@ -108,11 +115,7 @@ export class ProjectileSystem implements System {
         }
       }
 
-      // 3. Boss projectiles can hit the player
-      const ownerBoss = world.getComponent(proj.ownerEntity, 'boss');
-      if (ownerBoss) {
-        this.checkBossProjectileHit(world, entity, proj, projTransform);
-      }
+      // (Boss projectile → player check handled above via early continue)
     }
   }
 
