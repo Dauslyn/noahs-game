@@ -26,6 +26,8 @@ import { DeathRespawnSystem } from '../systems/death-respawn-system.js';
 import { StarfieldSystem } from '../systems/starfield-system.js';
 import { ParallaxBgSystem } from '../systems/parallax-bg-system.js';
 import { getBiomeConfig } from '../level/biome-config.js';
+import { createGameState, applyDeathPenalty } from './game-state.js';
+import type { GameState } from './game-state.js';
 import { HudSystem } from '../systems/hud-system.js';
 import { SoundManager } from '../audio/sound-manager.js';
 import { EffectsSystem, createWorldBloom } from '../systems/effects-system.js';
@@ -56,6 +58,7 @@ export class Game {
   private planetSelect: PlanetSelectScreen | null = null;
   private starfield!: StarfieldSystem;
   private parallaxBg: ParallaxBgSystem | null = null;
+  private gameState: GameState = createGameState();
 
   public worldContainer!: Container;
   public uiContainer!: Container;
@@ -151,6 +154,7 @@ export class Game {
 
   /** Called by DeathRespawnSystem after death delay. */
   returnToPlanetSelect(): void {
+    applyDeathPenalty(this.gameState);
     this.unloadLevel();
     this.showPlanetSelect();
   }
@@ -220,6 +224,7 @@ export class Game {
     this.addSystem(new ProjectileSystem(this.entityManager));
     this.addSystem(new DamageSystem(
       this.physicsCtx, this.soundManager, this.entityManager,
+      this.gameState, this.worldContainer,
     ));
     this.addSystem(new DeathRespawnSystem(
       this.physicsCtx, this.worldContainer,

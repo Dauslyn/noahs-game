@@ -15,6 +15,9 @@ import type { PhysicsContext } from '../core/physics.js';
 import { INVINCIBILITY_DURATION } from '../core/constants.js';
 import type { SoundManager } from '../audio/sound-manager.js';
 import type { EntityManager } from '../core/entity-manager.js';
+import { addScrap } from '../core/game-state.js';
+import type { GameState } from '../core/game-state.js';
+import type { Container } from 'pixi.js';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -39,20 +42,28 @@ export class DamageSystem implements System {
   private readonly physicsCtx: PhysicsContext;
   private readonly soundManager: SoundManager;
   private readonly entityManager: EntityManager;
+  private readonly gameState: GameState;
+  private readonly worldContainer: Container;
 
   /**
-   * @param physicsCtx     - shared physics context for knockback impulses
-   * @param soundManager   - audio manager for hit/death sounds
-   * @param entityManager  - centralised manager for deferred entity destruction
+   * @param physicsCtx      - shared physics context for knockback impulses
+   * @param soundManager    - audio manager for hit/death sounds
+   * @param entityManager   - centralised manager for deferred entity destruction
+   * @param gameState       - persistent player state (scrap, weapon)
+   * @param worldContainer  - world display container (used later for floating text)
    */
   constructor(
     physicsCtx: PhysicsContext,
     soundManager: SoundManager,
     entityManager: EntityManager,
+    gameState: GameState,
+    worldContainer: Container,
   ) {
     this.physicsCtx = physicsCtx;
     this.soundManager = soundManager;
     this.entityManager = entityManager;
+    this.gameState = gameState;
+    this.worldContainer = worldContainer;
   }
 
   /**
@@ -208,7 +219,27 @@ export class DamageSystem implements System {
       if (health.isDead) {
         this.entityManager.markForDestruction(entity);
         this.soundManager.play('enemy-death');
+
+        // Award scrap to the player based on enemy type
+        const enemy = world.getComponent(entity, 'enemy');
+        const scrapAmount = enemy
+          ? this.getScrapValue(enemy.enemyType)
+          : 5;
+        addScrap(this.gameState, scrapAmount);
       }
+    }
+  }
+
+  /**
+   * Return the scrap reward for killing an enemy of the given type.
+   * Tougher enemies are worth more scrap.
+   */
+  private getScrapValue(enemyType: string): number {
+    switch (enemyType) {
+      case 'walker': return 5;
+      case 'flyer': return 8;
+      case 'turret': return 10;
+      default: return 5;
     }
   }
 }
