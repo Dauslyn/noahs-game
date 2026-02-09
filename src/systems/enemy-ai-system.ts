@@ -27,6 +27,7 @@ import {
 } from './enemy-ai-behaviours-2.js';
 import { updateShielder } from './enemy-ai-behaviours-3.js';
 import { updatePhantom } from './enemy-ai-behaviours-4.js';
+import { spawnWarpParticles } from '../effects/warp-particles.js';
 
 // ---------------------------------------------------------------------------
 // System
@@ -123,13 +124,23 @@ export class EnemyAISystem implements System {
             world.getComponent(entity, 'sprite'),
           );
           break;
-        case 'phantom':
+        case 'phantom': {
+          const prevState = enemy.state;
           updatePhantom(
             this.physicsCtx, enemy, pb.bodyHandle,
             transform, playerTransform, inRange, dt,
             world.getComponent(entity, 'sprite'),
           );
+          // Spawn warp particles on state transitions:
+          // Warp-in: particles at departure point (old hidden position)
+          // Warp-out: particles at last visible position (pre-teleport)
+          if (prevState === 'idle' && enemy.state === 'chasing') {
+            spawnWarpParticles(this.worldContainer, transform.x, transform.y);
+          } else if (prevState === 'patrolling' && enemy.state === 'idle') {
+            spawnWarpParticles(this.worldContainer, transform.x, transform.y);
+          }
           break;
+        }
       }
 
       // Sync animation state based on AI state
