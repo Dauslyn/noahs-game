@@ -22,6 +22,9 @@ import { spawnFloatText } from '../ui/float-text.js';
 /** Pixel distance at which enemy-player contact counts as a hit. */
 const CONTACT_DISTANCE = 25;
 
+/** Larger contact distance for the boss body (~3x player size). */
+const BOSS_CONTACT_DISTANCE = 48;
+
 /** Horizontal knockback impulse magnitude (m/s). */
 const KNOCKBACK_IMPULSE_X = 5;
 
@@ -112,12 +115,14 @@ export class DamageSystem implements System {
       const enemyHealth = world.getComponent(enemyEntity, 'health');
       if (enemyHealth && enemyHealth.isDead) continue;
 
-      // Pixel distance check
+      // Pixel distance check — boss has larger hitbox
       const dx = enemyTransform.x - playerTransform.x;
       const dy = enemyTransform.y - playerTransform.y;
       const dist = Math.sqrt(dx * dx + dy * dy);
+      const isBoss = !!world.getComponent(enemyEntity, 'boss');
+      const threshold = isBoss ? BOSS_CONTACT_DISTANCE : CONTACT_DISTANCE;
 
-      if (dist >= CONTACT_DISTANCE) continue;
+      if (dist >= threshold) continue;
 
       // Player must not be invincible
       if (playerHealth.invincibleTimer > 0) continue;
@@ -206,11 +211,11 @@ export class DamageSystem implements System {
         this.entityManager.markForDestruction(entity);
         this.soundManager.play('enemy-death');
 
-        // Award scrap to the player based on enemy type
+        // Boss entities get special scrap reward (200)
+        const bossComp = world.getComponent(entity, 'boss');
         const enemy = world.getComponent(entity, 'enemy');
-        const scrapAmount = enemy
-          ? this.getScrapValue(enemy.enemyType)
-          : 5;
+        const scrapAmount = bossComp ? 200
+          : enemy ? this.getScrapValue(enemy.enemyType) : 5;
         addScrap(this.gameState, scrapAmount);
 
         // Spawn floating "+N" text at enemy position for visual feedback

@@ -74,6 +74,10 @@ export class EnemyAISystem implements System {
       const health = world.getComponent(entity, 'health');
       if (health && health.isDead) continue;
 
+      // Skip boss entities — handled by BossAISystem
+      const bossComp = world.getComponent(entity, 'boss');
+      if (bossComp) continue;
+
       // Distance to player (pixels)
       const dx = playerTransform.x - transform.x;
       const dy = playerTransform.y - transform.y;

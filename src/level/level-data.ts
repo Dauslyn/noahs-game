@@ -34,7 +34,8 @@ export interface SpawnPointDef {
   /** Entity type to spawn. */
   type:
     | 'player' | 'enemy-walker' | 'enemy-flyer' | 'enemy-turret'
-    | 'enemy-sentry' | 'enemy-crawler' | 'enemy-shielder';
+    | 'enemy-sentry' | 'enemy-crawler' | 'enemy-shielder'
+    | 'enemy-boss-warden';
 }
 
 /** Complete level definition consumed by the level builder. */
@@ -55,6 +56,10 @@ export interface LevelData {
   spawnPoints: SpawnPointDef[];
   /** Where the player starts. */
   playerSpawn: { x: number; y: number };
+  /** X coordinate that triggers boss spawn when player crosses it (pixels). */
+  bossTriggerX?: number;
+  /** Arena bounds for boss fight (pixels). */
+  bossArena?: { minX: number; maxX: number; y: number };
 }
 
 // ---------------------------------------------------------------------------

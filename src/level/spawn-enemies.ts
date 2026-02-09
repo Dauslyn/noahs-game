@@ -46,6 +46,9 @@ export function spawnEnemies(
       case 'enemy-shielder':
         createShielderEnemy(world, physicsCtx, worldContainer, sp.x, sp.y);
         break;
+      case 'enemy-boss-warden':
+        // Boss spawned dynamically by BossTriggerSystem — skip here
+        break;
     }
   }
 }

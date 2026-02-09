@@ -19,6 +19,9 @@ import type { SoundManager } from '../audio/sound-manager.js';
 /** Distance in pixels at which a projectile "hits" an enemy. */
 const HIT_DISTANCE = 15;
 
+/** Larger hit distance for boss laser beams (tall, wide). */
+const BOSS_LASER_HIT_DISTANCE = 30;
+
 export class ProjectileSystem implements System {
   readonly priority = 35;
 
@@ -59,7 +62,14 @@ export class ProjectileSystem implements System {
         continue;
       }
 
-      // 2. Check proximity-based hit against enemies
+      // 2a. Boss-owned projectiles skip enemy hit loop (only target player)
+      const ownerBoss = world.getComponent(proj.ownerEntity, 'boss');
+      if (ownerBoss) {
+        this.checkBossProjectileHit(world, entity, proj, projTransform);
+        continue;
+      }
+
+      // 2b. Check proximity-based hit against enemies
       for (const enemyEntity of enemies) {
         const enemyTransform = world.getComponent(enemyEntity, 'transform');
         if (!enemyTransform) continue;
@@ -103,6 +113,40 @@ export class ProjectileSystem implements System {
           this.entityManager.markForDestruction(entity);
           break; // one projectile can only hit one enemy
         }
+      }
+
+      // (Boss projectile → player check handled above via early continue)
+    }
+  }
+
+  /**
+   * Check if a boss-owned projectile hits the player.
+   * Uses a larger hit distance for the wide laser beam.
+   */
+  private checkBossProjectileHit(
+    world: World,
+    projectileEntity: number,
+    proj: { damage: number },
+    projTransform: { x: number; y: number },
+  ): void {
+    const players = world.query('player', 'transform', 'health');
+
+    for (const playerEntity of players) {
+      const pt = world.getComponent(playerEntity, 'transform');
+      const ph = world.getComponent(playerEntity, 'health');
+      if (!pt || !ph || ph.isDead || ph.invincibleTimer > 0) continue;
+
+      const dx = pt.x - projTransform.x;
+      const dy = pt.y - projTransform.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+
+      if (dist < BOSS_LASER_HIT_DISTANCE) {
+        ph.current = Math.max(0, ph.current - proj.damage);
+        if (ph.current <= 0) ph.isDead = true;
+        ph.invincibleTimer = 1.0;
+        this.entityManager.markForDestruction(projectileEntity);
+        this.soundManager.play('hit');
+        break;
       }
     }
   }
