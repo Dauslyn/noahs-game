@@ -45,7 +45,8 @@ export type ComponentType =
   | 'health'
   | 'weapon'
   | 'enemy'
-  | 'projectile';
+  | 'projectile'
+  | 'animationState';
 
 /** Base shape every component must satisfy. */
 export interface Component {

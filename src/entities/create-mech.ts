@@ -2,10 +2,10 @@
  * Mech companion entity factory – creates the orbiting mech companion
  * with no physics body (it floats freely around the player).
  *
- * Placeholder visual: a 16x16 cyan diamond shape.
+ * Uses the pixel-robot spritesheet (180x64, 2 rows: idle + run).
  */
 
-import { Graphics } from 'pixi.js';
+import { AnimatedSprite } from 'pixi.js';
 import type { Container } from 'pixi.js';
 import type { Entity } from '../core/types.js';
 import type { World } from '../core/world.js';
@@ -17,19 +17,39 @@ import {
   LASER_RANGE,
   LASER_SPEED,
 } from '../core/constants.js';
+import { getTexture, hasTexture } from '../core/asset-loader.js';
+import { extractFrames } from '../core/sprite-utils.js';
+import type { AnimationData } from '../components/animation-state.js';
 import {
   createTransform,
   createMech,
   createWeapon,
   createSprite,
+  createAnimationState,
 } from '../components/index.js';
 
 // ---------------------------------------------------------------------------
-// Visual dimensions (pixels)
+// Sprite dimensions (pixel robot: 180x64, 2 rows of 7 frames)
+// Frames are 12px content on a 16px stride, starting at x=17, each row 32px
 // ---------------------------------------------------------------------------
 
-/** Diamond sprite width (pixels). */
-const DIAMOND_SIZE = 16;
+/** Single frame width (content area). */
+const FRAME_W = 12;
+
+/** Single frame height (64 / 2 = 32). */
+const FRAME_H = 32;
+
+/** Horizontal stride between frame starts (16px grid). */
+const FRAME_STRIDE = 16;
+
+/** X offset where the first frame begins. */
+const FRAME_OFFSET_X = 17;
+
+/** Number of frames per animation row. */
+const FRAME_COUNT = 7;
+
+/** Scale up the small robot sprite to be visible. */
+const MECH_SCALE = 2.0;
 
 // ---------------------------------------------------------------------------
 // Factory
@@ -37,14 +57,7 @@ const DIAMOND_SIZE = 16;
 
 /**
  * Create the mech companion entity with orbit/weapon components
- * and a cyan diamond placeholder sprite. No physics body.
- *
- * @param world          - the ECS world
- * @param worldContainer - PixiJS container for world-space visuals
- * @param ownerEntity    - entity ID of the player this mech belongs to
- * @param x              - spawn X position (pixels)
- * @param y              - spawn Y position (pixels)
- * @returns the newly created entity ID
+ * and an animated pixel-robot sprite. No physics body.
  */
 export function createMechEntity(
   world: World,
@@ -66,44 +79,59 @@ export function createMechEntity(
     createWeapon(LASER_DAMAGE, LASER_FIRE_RATE, LASER_RANGE, LASER_SPEED),
   );
 
-  // -- Sci-fi drone sprite (procedural) --
-  const half = DIAMOND_SIZE / 2;
-  const gfx = new Graphics();
+  // -- Animated sprite --
+  const animSprite = buildMechSprite();
+  animSprite.scale.set(MECH_SCALE);
+  worldContainer.addChild(animSprite);
 
-  // Outer shell: diamond shape with metallic look
-  gfx.moveTo(0, -half - 2);
-  gfx.lineTo(half + 2, 0);
-  gfx.lineTo(0, half + 2);
-  gfx.lineTo(-half - 2, 0);
-  gfx.closePath();
-  gfx.fill(0x115566);
+  const spriteW = FRAME_W * MECH_SCALE;
+  const spriteH = FRAME_H * MECH_SCALE;
+  world.addComponent(entity, createSprite(animSprite, spriteW, spriteH));
 
-  // Inner core: smaller diamond, brighter
-  gfx.moveTo(0, -half + 2);
-  gfx.lineTo(half - 2, 0);
-  gfx.lineTo(0, half - 2);
-  gfx.lineTo(-half + 2, 0);
-  gfx.closePath();
-  gfx.fill(0x00ddcc);
-
-  // Centre eye: small bright dot
-  gfx.circle(0, 0, 2);
-  gfx.fill(0xffffff);
-
-  // Wing accents: tiny lines
-  gfx.moveTo(-half - 2, 0);
-  gfx.lineTo(-half - 5, -2);
-  gfx.stroke({ width: 1, color: 0x00ffff });
-  gfx.moveTo(half + 2, 0);
-  gfx.lineTo(half + 5, -2);
-  gfx.stroke({ width: 1, color: 0x00ffff });
-
-  worldContainer.addChild(gfx);
-
-  world.addComponent(
-    entity,
-    createSprite(gfx, DIAMOND_SIZE, DIAMOND_SIZE),
-  );
+  // -- Animation state --
+  const animations = buildMechAnimations();
+  if (animations.size > 0) {
+    world.addComponent(entity, createAnimationState(animations, 'idle'));
+  }
 
   return entity;
+}
+
+// ---------------------------------------------------------------------------
+// Sprite helpers
+// ---------------------------------------------------------------------------
+
+/** Extract mech frames with the correct offset and stride. */
+function mechFrames(row: number): import('pixi.js').Texture[] {
+  return extractFrames(
+    getTexture('mech-robot'),
+    FRAME_W, FRAME_H, row, FRAME_COUNT,
+    FRAME_OFFSET_X, FRAME_STRIDE,
+  );
+}
+
+/** Build the AnimatedSprite starting with idle frames. */
+function buildMechSprite(): AnimatedSprite {
+  if (hasTexture('mech-robot')) {
+    const frames = mechFrames(0);
+    const sprite = new AnimatedSprite(frames);
+    sprite.anchor.set(0.5, 0.5);
+    sprite.animationSpeed = 8 / 60;
+    sprite.play();
+    return sprite;
+  }
+  const sprite = new AnimatedSprite([getTexture('mech-robot')]);
+  sprite.anchor.set(0.5, 0.5);
+  return sprite;
+}
+
+/** Build idle + run animation map for the mech. */
+function buildMechAnimations(): Map<string, AnimationData> {
+  const anims = new Map<string, AnimationData>();
+  if (!hasTexture('mech-robot')) return anims;
+
+  anims.set('idle', { frames: mechFrames(0), fps: 8, loop: true });
+  anims.set('run', { frames: mechFrames(1), fps: 12, loop: true });
+
+  return anims;
 }

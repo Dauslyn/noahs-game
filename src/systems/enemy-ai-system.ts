@@ -12,7 +12,10 @@ import type { System } from '../core/types.js';
 import type { World } from '../core/world.js';
 import type { PhysicsContext } from '../core/physics.js';
 import type { Container } from 'pixi.js';
-import type { TransformComponent } from '../components/index.js';
+import type {
+  TransformComponent,
+  AnimationStateComponent,
+} from '../components/index.js';
 import {
   updateWalker,
   updateFlyer,
@@ -92,7 +95,34 @@ export class EnemyAISystem implements System {
           );
           break;
       }
+
+      // Sync animation state based on AI state
+      this.syncEnemyAnimation(world, entity, enemy.enemyType, enemy.state);
     }
+  }
+
+  /** Set the animation state for enemies that have an AnimationStateComponent. */
+  private syncEnemyAnimation(
+    world: World,
+    entity: number,
+    type: string,
+    aiState: string,
+  ): void {
+    const animState = world.getComponent(entity, 'animationState') as
+      | AnimationStateComponent
+      | undefined;
+    if (!animState) return;
+
+    if (type === 'walker') {
+      animState.currentAnimation =
+        aiState === 'chasing' ? 'walk' : 'idle';
+      // Flip based on patrol direction
+      const enemy = world.getComponent(entity, 'enemy');
+      if (enemy) {
+        animState.flipX = enemy.patrolDirection === -1;
+      }
+    }
+    // Flyer and turret only have one animation; no switching needed
   }
 
   /**

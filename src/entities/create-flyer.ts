@@ -1,37 +1,48 @@
 /**
  * Flyer enemy entity factory – creates an alien drone that bobs in the air
  * and chases the player when in range.
+ *
+ * Uses Ansimuz alien-flying-enemy sprites (8 individual PNGs).
  */
 
 import RAPIER from '@dimforge/rapier2d-compat';
-import { Graphics } from 'pixi.js';
+import { AnimatedSprite } from 'pixi.js';
 import type { Container } from 'pixi.js';
 import type { Entity } from '../core/types.js';
 import type { World } from '../core/world.js';
 import type { PhysicsContext } from '../core/physics.js';
 import { toPhysicsPos } from '../core/physics.js';
 import { registerCollider } from '../core/collision-utils.js';
+import { getTexture, hasTexture } from '../core/asset-loader.js';
+import type { AnimationData } from '../components/animation-state.js';
 import {
   createTransform,
   createPhysicsBody,
   createEnemy,
   createHealth,
   createSprite,
+  createAnimationState,
 } from '../components/index.js';
 
-/** Flyer diamond size (pixels). */
-const FLYER_SIZE = 16;
+// ---------------------------------------------------------------------------
+// Sprite config
+// ---------------------------------------------------------------------------
+
+/** Each flyer frame is 83x64 pixels. */
+const FRAME_W = 83;
+const FRAME_H = 64;
+
+/** Display scale (these are larger sprites, scale down a bit). */
+const FLYER_SCALE = 0.7;
+
+/** The 8 individual texture aliases for the flyer animation. */
+const FLYER_FRAME_ALIASES = [
+  'flyer-1', 'flyer-2', 'flyer-3', 'flyer-4',
+  'flyer-5', 'flyer-6', 'flyer-7', 'flyer-8',
+];
 
 /**
- * Create a flyer enemy – bobs in the air, chases the player when in range.
- * Zero gravity so it floats.
- *
- * @param world          - the ECS world
- * @param physicsCtx     - shared physics context (Rapier world)
- * @param worldContainer - PixiJS container for world-space visuals
- * @param x              - spawn X position (pixels)
- * @param y              - spawn Y position (pixels)
- * @returns the newly created entity ID
+ * Create a flyer enemy with animated sprite.
  */
 export function createFlyerEnemy(
   world: World,
@@ -50,7 +61,6 @@ export function createFlyerEnemy(
     .setGravityScale(0);
   const body = physicsCtx.world.createRigidBody(bodyDesc);
 
-  // Small circle collider, radius 0.2m
   const colliderDesc = RAPIER.ColliderDesc.ball(0.2)
     .setFriction(0)
     .setRestitution(0);
@@ -62,52 +72,61 @@ export function createFlyerEnemy(
   world.addComponent(entity, createHealth(20));
   world.addComponent(entity, createEnemy('flyer', 10, 250, 0, x));
 
-  // -- Sci-fi alien drone sprite --
-  const gfx = new Graphics();
-  const half = FLYER_SIZE / 2;
+  // -- Animated sprite --
+  const animSprite = buildFlyerSprite();
+  animSprite.scale.set(FLYER_SCALE);
+  worldContainer.addChild(animSprite);
 
-  // Outer shell: angular carapace
-  gfx.moveTo(0, -half - 2);
-  gfx.lineTo(half + 3, -2);
-  gfx.lineTo(half, half - 2);
-  gfx.lineTo(-half, half - 2);
-  gfx.lineTo(-half - 3, -2);
-  gfx.closePath();
-  gfx.fill(0x884400);
+  const spriteW = FRAME_W * FLYER_SCALE;
+  const spriteH = FRAME_H * FLYER_SCALE;
+  world.addComponent(entity, createSprite(animSprite, spriteW, spriteH));
 
-  // Inner body: brighter core
-  gfx.moveTo(0, -half + 1);
-  gfx.lineTo(half - 1, -1);
-  gfx.lineTo(half - 2, half - 4);
-  gfx.lineTo(-half + 2, half - 4);
-  gfx.lineTo(-half + 1, -1);
-  gfx.closePath();
-  gfx.fill(0xcc6622);
+  // -- Animation state --
+  const animations = buildFlyerAnimations();
+  if (animations.size > 0) {
+    world.addComponent(entity, createAnimationState(animations, 'fly'));
+  }
 
-  // Central eye: glowing orange orb
-  gfx.circle(0, 0, 3);
-  gfx.fill(0xff8800);
-  gfx.circle(0, 0, 1.5);
-  gfx.fill(0xffcc44);
-
-  // Wing tips: small energy lines
-  gfx.moveTo(-half - 3, -2);
-  gfx.lineTo(-half - 6, -4);
-  gfx.stroke({ width: 1, color: 0xffaa33 });
-  gfx.moveTo(half + 3, -2);
-  gfx.lineTo(half + 6, -4);
-  gfx.stroke({ width: 1, color: 0xffaa33 });
-
-  // Thruster glow: small dot underneath
-  gfx.circle(0, half - 2, 2);
-  gfx.fill({ color: 0xff6600, alpha: 0.5 });
-
-  worldContainer.addChild(gfx);
-
-  world.addComponent(entity, createSprite(gfx, FLYER_SIZE, FLYER_SIZE));
-
-  // -- Register collider for collision lookups --
+  // -- Register collider --
   registerCollider(physicsCtx, collider.handle, entity);
 
   return entity;
+}
+
+// ---------------------------------------------------------------------------
+// Sprite helpers
+// ---------------------------------------------------------------------------
+
+/** Collect the 8 individual flyer textures into an array. */
+function collectFlyerFrames(): import('pixi.js').Texture[] {
+  const frames = [];
+  for (const alias of FLYER_FRAME_ALIASES) {
+    if (hasTexture(alias)) {
+      frames.push(getTexture(alias));
+    }
+  }
+  return frames;
+}
+
+function buildFlyerSprite(): AnimatedSprite {
+  const frames = collectFlyerFrames();
+  if (frames.length > 0) {
+    const sprite = new AnimatedSprite(frames);
+    sprite.anchor.set(0.5, 0.5);
+    sprite.animationSpeed = 10 / 60;
+    sprite.play();
+    return sprite;
+  }
+  const sprite = new AnimatedSprite([getTexture('flyer-1')]);
+  sprite.anchor.set(0.5, 0.5);
+  return sprite;
+}
+
+function buildFlyerAnimations(): Map<string, AnimationData> {
+  const anims = new Map<string, AnimationData>();
+  const frames = collectFlyerFrames();
+  if (frames.length > 0) {
+    anims.set('fly', { frames, fps: 10, loop: true });
+  }
+  return anims;
 }

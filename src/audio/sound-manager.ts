@@ -26,20 +26,18 @@ export class SoundManager {
 
   /**
    * Load all game sound effects. Call once during game init.
-   * Each sound is loaded with fallback formats (wav + mp3).
+   * Uses Kenney Digital SFX pack (CC0 MP3 files).
    * Individual load failures are caught and logged without crashing.
    */
   loadAll(): void {
     const soundDefs: SoundDef[] = [
-      { name: 'jump', src: ['/assets/sounds/jump.wav', '/assets/sounds/jump.mp3'], volume: 0.5 },
-      { name: 'laser', src: ['/assets/sounds/laser.wav', '/assets/sounds/laser.mp3'], volume: 0.3 },
-      { name: 'hit', src: ['/assets/sounds/hit.wav', '/assets/sounds/hit.mp3'], volume: 0.6 },
-      { name: 'death', src: ['/assets/sounds/death.wav', '/assets/sounds/death.mp3'], volume: 0.7 },
-      {
-        name: 'enemy-death',
-        src: ['/assets/sounds/enemy-death.wav', '/assets/sounds/enemy-death.mp3'],
-        volume: 0.4,
-      },
+      { name: 'jump', src: ['/assets/sounds/phaseJump1.mp3'], volume: 0.4 },
+      { name: 'laser', src: ['/assets/sounds/laser5.mp3'], volume: 0.25 },
+      { name: 'hit', src: ['/assets/sounds/spaceTrash2.mp3'], volume: 0.5 },
+      { name: 'death', src: ['/assets/sounds/phaserDown2.mp3'], volume: 0.6 },
+      { name: 'enemy-death', src: ['/assets/sounds/zapThreeToneDown.mp3'], volume: 0.35 },
+      { name: 'powerup', src: ['/assets/sounds/powerUp3.mp3'], volume: 0.4 },
+      { name: 'land', src: ['/assets/sounds/pepSound1.mp3'], volume: 0.15 },
     ];
 
     for (const def of soundDefs) {

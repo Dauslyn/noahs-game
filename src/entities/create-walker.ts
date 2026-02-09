@@ -1,40 +1,47 @@
 /**
  * Walker enemy entity factory – creates an alien trooper that patrols
  * platforms and chases the player when in range.
+ *
+ * Uses Ansimuz alien-walking-enemy spritesheets.
  */
 
 import RAPIER from '@dimforge/rapier2d-compat';
-import { Graphics } from 'pixi.js';
+import { AnimatedSprite } from 'pixi.js';
 import type { Container } from 'pixi.js';
 import type { Entity } from '../core/types.js';
 import type { World } from '../core/world.js';
 import type { PhysicsContext } from '../core/physics.js';
 import { toPhysicsPos } from '../core/physics.js';
 import { registerCollider } from '../core/collision-utils.js';
+import { getTexture, hasTexture } from '../core/asset-loader.js';
+import { extractFrames } from '../core/sprite-utils.js';
+import type { AnimationData } from '../components/animation-state.js';
 import {
   createTransform,
   createPhysicsBody,
   createEnemy,
   createHealth,
   createSprite,
+  createAnimationState,
 } from '../components/index.js';
 
-/** Walker sprite width (pixels). */
-const WALKER_WIDTH = 20;
+// ---------------------------------------------------------------------------
+// Sprite dimensions
+// ---------------------------------------------------------------------------
 
-/** Walker sprite height (pixels). */
-const WALKER_HEIGHT = 24;
+/** Walker idle frames: 192/4 = 48 wide, 48 tall. */
+const IDLE_FRAME_W = 48;
+const IDLE_FRAME_H = 48;
+
+/** Walker walk frames: ~49 wide, 42 tall. Use 48x42 for cleaner extraction. */
+const WALK_FRAME_W = 48;
+const WALK_FRAME_H = 42;
+
+/** Display scale. */
+const WALKER_SCALE = 1.2;
 
 /**
- * Create a walker enemy – patrols back and forth on platforms,
- * chases the player when in range.
- *
- * @param world          - the ECS world
- * @param physicsCtx     - shared physics context (Rapier world)
- * @param worldContainer - PixiJS container for world-space visuals
- * @param x              - spawn X position (pixels)
- * @param y              - spawn Y position (pixels)
- * @returns the newly created entity ID
+ * Create a walker enemy with animated sprite.
  */
 export function createWalkerEnemy(
   world: World,
@@ -52,7 +59,6 @@ export function createWalkerEnemy(
     .lockRotations();
   const body = physicsCtx.world.createRigidBody(bodyDesc);
 
-  // Capsule collider: half-height 0.2m, radius 0.2m, friction 0.5
   const colliderDesc = RAPIER.ColliderDesc.capsule(0.2, 0.2)
     .setFriction(0.5)
     .setRestitution(0);
@@ -64,52 +70,68 @@ export function createWalkerEnemy(
   world.addComponent(entity, createHealth(30));
   world.addComponent(entity, createEnemy('walker', 15, 200, 100, x));
 
-  // -- Sci-fi alien trooper sprite --
-  const gfx = new Graphics();
-  const wHalf = WALKER_WIDTH / 2;
-  const wHh = WALKER_HEIGHT / 2;
+  // -- Animated sprite --
+  const animSprite = buildWalkerSprite();
+  animSprite.scale.set(WALKER_SCALE);
+  worldContainer.addChild(animSprite);
 
-  // Legs: two dark pillars
-  gfx.rect(-wHalf, wHh - 8, 7, 8);
-  gfx.fill(0x661122);
-  gfx.rect(wHalf - 7, wHh - 8, 7, 8);
-  gfx.fill(0x661122);
+  const spriteW = IDLE_FRAME_W * WALKER_SCALE;
+  const spriteH = IDLE_FRAME_H * WALKER_SCALE;
+  world.addComponent(entity, createSprite(animSprite, spriteW, spriteH));
 
-  // Body: armoured torso with layered plates
-  gfx.roundRect(-wHalf, -wHh + 6, WALKER_WIDTH, WALKER_HEIGHT - 14, 2);
-  gfx.fill(0x881133);
-  gfx.roundRect(-wHalf + 2, -wHh + 8, WALKER_WIDTH - 4, WALKER_HEIGHT - 18, 2);
-  gfx.fill(0xaa2244);
+  // -- Animation state --
+  const animations = buildWalkerAnimations();
+  if (animations.size > 0) {
+    world.addComponent(entity, createAnimationState(animations, 'idle'));
+  }
 
-  // Chest vent (glowing slit)
-  gfx.rect(-wHalf + 4, -wHh + 12, WALKER_WIDTH - 8, 2);
-  gfx.fill(0xff6644);
-
-  // Head: rounded alien helmet
-  gfx.roundRect(-wHalf + 2, -wHh, WALKER_WIDTH - 4, 10, 4);
-  gfx.fill(0x992233);
-
-  // Eyes: two glowing red dots
-  gfx.circle(-3, -wHh + 5, 2);
-  gfx.fill(0xff4444);
-  gfx.circle(3, -wHh + 5, 2);
-  gfx.fill(0xff4444);
-
-  // Eye glow centres
-  gfx.circle(-3, -wHh + 5, 1);
-  gfx.fill(0xffaaaa);
-  gfx.circle(3, -wHh + 5, 1);
-  gfx.fill(0xffaaaa);
-
-  worldContainer.addChild(gfx);
-
-  world.addComponent(
-    entity,
-    createSprite(gfx, WALKER_WIDTH, WALKER_HEIGHT),
-  );
-
-  // -- Register collider for collision lookups --
+  // -- Register collider --
   registerCollider(physicsCtx, collider.handle, entity);
 
   return entity;
+}
+
+// ---------------------------------------------------------------------------
+// Sprite helpers
+// ---------------------------------------------------------------------------
+
+function buildWalkerSprite(): AnimatedSprite {
+  if (hasTexture('walker-idle')) {
+    const frames = extractFrames(
+      getTexture('walker-idle'), IDLE_FRAME_W, IDLE_FRAME_H, 0, 4,
+    );
+    const sprite = new AnimatedSprite(frames);
+    sprite.anchor.set(0.5, 0.5);
+    sprite.animationSpeed = 6 / 60;
+    sprite.play();
+    return sprite;
+  }
+  const sprite = new AnimatedSprite([getTexture('walker-idle')]);
+  sprite.anchor.set(0.5, 0.5);
+  return sprite;
+}
+
+function buildWalkerAnimations(): Map<string, AnimationData> {
+  const anims = new Map<string, AnimationData>();
+
+  if (hasTexture('walker-idle')) {
+    anims.set('idle', {
+      frames: extractFrames(
+        getTexture('walker-idle'), IDLE_FRAME_W, IDLE_FRAME_H, 0, 4,
+      ),
+      fps: 6,
+      loop: true,
+    });
+  }
+  if (hasTexture('walker-walk')) {
+    anims.set('walk', {
+      frames: extractFrames(
+        getTexture('walker-walk'), WALK_FRAME_W, WALK_FRAME_H, 0, 7,
+      ),
+      fps: 10,
+      loop: true,
+    });
+  }
+
+  return anims;
 }

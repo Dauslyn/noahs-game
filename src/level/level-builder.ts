@@ -1,15 +1,14 @@
 /**
  * Level builder – turns a LevelData definition into ECS entities
- * with static Rapier bodies and PixiJS visual rectangles.
+ * with static Rapier bodies and PixiJS tiled visuals.
  *
  * Each platform becomes an entity with:
  *   - TransformComponent (centre position in pixels)
  *   - PhysicsBodyComponent (static Rapier body)
- *   - SpriteComponent (dark gray rectangle)
+ *   - SpriteComponent (tiled platform visual)
  */
 
 import RAPIER from '@dimforge/rapier2d-compat';
-import { Graphics } from 'pixi.js';
 import type { Container } from 'pixi.js';
 import type { World } from '../core/world.js';
 import type { PhysicsContext } from '../core/physics.js';
@@ -21,28 +20,7 @@ import {
   createSprite,
 } from '../components/index.js';
 import type { LevelData, PlatformDef } from './level-data.js';
-
-// ---------------------------------------------------------------------------
-// Default colours
-// ---------------------------------------------------------------------------
-
-/** Default platform fill colour (dark metallic blue). */
-const DEFAULT_FILL = 0x1a2a3a;
-
-/** Platform surface highlight colour (lighter top edge). */
-const SURFACE_COLOR = 0x3a5a7a;
-
-/** Platform outline colour (subtle border). */
-const OUTLINE_COLOR = 0x4a6a8a;
-
-/** Outline thickness in pixels. */
-const OUTLINE_WIDTH = 1;
-
-/** Panel line colour for surface detail. */
-const PANEL_LINE_COLOR = 0x2a3a4a;
-
-/** Panel line spacing in pixels. */
-const PANEL_SPACING = 24;
+import { renderPlatformTiled } from './tile-renderer.js';
 
 // ---------------------------------------------------------------------------
 // Builder
@@ -55,7 +33,7 @@ const PANEL_SPACING = 24;
  *   1. Creates an ECS entity
  *   2. Creates a Rapier fixed (static) rigid body
  *   3. Attaches a cuboid collider sized to the platform
- *   4. Draws a PixiJS rectangle as the visual
+ *   4. Renders a tiled PixiJS visual
  *   5. Registers the collider for collision lookups
  *
  * @param levelData      - the level definition to build
@@ -75,7 +53,7 @@ export function buildLevel(
 }
 
 /**
- * Create a single platform entity with physics body and visual.
+ * Create a single platform entity with physics body and tiled visual.
  *
  * @param def            - platform definition (position, size, optional colour)
  * @param world          - the ECS world
@@ -108,54 +86,10 @@ function buildPlatform(
   world.addComponent(entity, createTransform(def.x, def.y));
   world.addComponent(entity, createPhysicsBody(body.handle, 'static'));
 
-  // -- Sci-fi platform visual with surface detail --
-  const fillColor = def.color ?? DEFAULT_FILL;
-  const hw = def.width / 2;
-  const hh = def.height / 2;
-  const gfx = new Graphics();
-
-  // Main body: dark metallic fill
-  gfx.rect(-hw, -hh, def.width, def.height);
-  gfx.fill(fillColor);
-
-  // Top surface highlight: bright strip along the top edge
-  gfx.rect(-hw, -hh, def.width, 3);
-  gfx.fill(SURFACE_COLOR);
-
-  // Bottom edge shadow: darker strip
-  gfx.rect(-hw, hh - 2, def.width, 2);
-  gfx.fill(0x0a1520);
-
-  // Vertical panel lines: evenly spaced across the surface
-  const panelCount = Math.floor(def.width / PANEL_SPACING);
-  for (let i = 1; i < panelCount; i++) {
-    const px = -hw + i * PANEL_SPACING;
-    gfx.moveTo(px, -hh + 3);
-    gfx.lineTo(px, hh - 2);
-    gfx.stroke({ width: 1, color: PANEL_LINE_COLOR });
-  }
-
-  // Corner rivets: small dots at platform corners
-  if (def.width >= 40 && def.height >= 16) {
-    const rivetInset = 4;
-    const rivetColor = 0x5a7a9a;
-    gfx.circle(-hw + rivetInset, -hh + rivetInset, 1.5);
-    gfx.fill(rivetColor);
-    gfx.circle(hw - rivetInset, -hh + rivetInset, 1.5);
-    gfx.fill(rivetColor);
-    gfx.circle(-hw + rivetInset, hh - rivetInset, 1.5);
-    gfx.fill(rivetColor);
-    gfx.circle(hw - rivetInset, hh - rivetInset, 1.5);
-    gfx.fill(rivetColor);
-  }
-
-  // Outer border
-  gfx.rect(-hw, -hh, def.width, def.height);
-  gfx.stroke({ color: OUTLINE_COLOR, width: OUTLINE_WIDTH });
-
-  worldContainer.addChild(gfx);
-
-  world.addComponent(entity, createSprite(gfx, def.width, def.height));
+  // -- Tiled platform visual --
+  const visual = renderPlatformTiled(def.width, def.height);
+  worldContainer.addChild(visual);
+  world.addComponent(entity, createSprite(visual, def.width, def.height));
 
   // -- Register collider handle -> entity --
   registerCollider(physicsCtx, collider.handle, entity);

@@ -64,6 +64,9 @@ const TWINKLE_FRACTION = 0.2;
 export class StarfieldSystem implements System {
   readonly priority = -10;
 
+  /** Whether the starfield update logic runs each frame. */
+  public enabled = true;
+
   /** PixiJS containers, one per parallax layer (back, mid, front). */
   private readonly layers: Container[] = [];
 
@@ -111,6 +114,8 @@ export class StarfieldSystem implements System {
    * @param dt    - delta time in seconds
    */
   update(world: World, dt: number): void {
+    if (!this.enabled) return;
+
     this.elapsedTime += dt;
 
     // Find camera target from the player's transform
@@ -129,6 +134,17 @@ export class StarfieldSystem implements System {
     // Animate twinkle stars: alpha = baseAlpha + sin(time * speed + phase) * 0.15
     for (const ts of this.twinkleStars) {
       ts.graphics.alpha = ts.baseAlpha + Math.sin(this.elapsedTime * ts.speed + ts.phase) * 0.15;
+    }
+  }
+
+  /**
+   * Show or hide all star layer containers.
+   *
+   * @param visible - whether the star layers should be visible
+   */
+  setVisible(visible: boolean): void {
+    for (const layer of this.layers) {
+      layer.visible = visible;
     }
   }
 

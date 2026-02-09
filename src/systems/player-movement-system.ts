@@ -17,7 +17,7 @@ import {
   PLAYER_SPEED, PLAYER_JUMP_IMPULSE,
   WALL_JUMP_IMPULSE_X, WALL_JUMP_IMPULSE_Y, WALL_SLIDE_SPEED,
 } from '../core/constants.js';
-import type { PlayerComponent } from '../components/index.js';
+import type { PlayerComponent, AnimationStateComponent } from '../components/index.js';
 import type { SoundManager } from '../audio/sound-manager.js';
 
 // Capsule geometry (metres) -- must match create-player.ts
@@ -63,6 +63,7 @@ export class PlayerMovementSystem implements System {
       this.applyJump(body, player);
       this.applyWallSlide(body, player);
       this.updateState(body, player);
+      this.syncAnimationState(world, entity, player, body);
     }
   }
 
@@ -197,6 +198,35 @@ export class PlayerMovementSystem implements System {
     } else {
       player.state = 'falling';
     }
+  }
+
+  /** Map player state to animation name and set flipX from velocity. */
+  private syncAnimationState(
+    world: World,
+    entity: number,
+    player: PlayerComponent,
+    body: RAPIER.RigidBody,
+  ): void {
+    const animState = world.getComponent(entity, 'animationState') as
+      | AnimationStateComponent
+      | undefined;
+    if (!animState) return;
+
+    const stateMap: Record<string, string> = {
+      idle: 'idle',
+      running: 'run',
+      jumping: 'jump',
+      falling: 'fall',
+      wallSliding: 'fall',
+      dead: 'die',
+    };
+    const newAnim = stateMap[player.state] ?? 'idle';
+    animState.currentAnimation = newAnim;
+
+    // Flip sprite based on velocity direction (threshold avoids flicker)
+    const vel = body.linvel();
+    if (vel.x < -0.5) animState.flipX = true;
+    else if (vel.x > 0.5) animState.flipX = false;
   }
 
   /** Look up the Rapier Collider object for an ECS entity. */
