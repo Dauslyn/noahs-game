@@ -7,8 +7,8 @@
 import { Container, Graphics, Text, TextStyle } from 'pixi.js';
 import type { GameState } from '../core/game-state.js';
 import type { ShopItem } from '../economy/shop-defs.js';
-import { getShopDisplay } from '../economy/shop-logic.js';
-import { buyItem } from '../economy/shop-logic.js';
+import { getShopDisplay, buyItem } from '../economy/shop-logic.js';
+import { drawRect, MONO } from './ui-helpers.js';
 
 // ---------------------------------------------------------------------------
 // Layout constants
@@ -25,7 +25,6 @@ const COL_OWNED = 0x0a2a0a;
 const COL_BORDER = 0x00ccff;
 const COL_OWNED_BORDER = 0x44cc44;
 const COL_LOCKED_BORDER = 0x444466;
-const MONO = 'monospace';
 
 // ---------------------------------------------------------------------------
 // ShopPanel class
@@ -129,10 +128,10 @@ export class ShopPanel {
     // Click handler
     ctr.on('pointertap', () => this.handleClick(item));
 
-    // Hover effects (set in updateButton based on state)
+    // Hover effects
     ctr.on('pointerover', () => {
       if (this.canInteract(item)) {
-        this.drawBg(bg, COL_HOVER, COL_BORDER, 2);
+        drawRect(bg, ITEM_W, ITEM_H, ITEM_R, COL_HOVER, COL_BORDER, 2);
       }
     });
     ctr.on('pointerout', () => this.refreshSingleButton(item, bg));
@@ -144,9 +143,8 @@ export class ShopPanel {
     try {
       buyItem(item, this.gameState);
       this.onPurchase();
-      this.refresh();
-    } catch {
-      // canBuy check failed — button should already be disabled visually
+    } catch (e: unknown) {
+      console.warn(`[ShopPanel] Purchase failed for ${item.name}:`, e);
     }
   }
 
@@ -166,7 +164,7 @@ export class ShopPanel {
       ? COL_OWNED_BORDER
       : info.reason ? COL_LOCKED_BORDER : COL_BORDER;
     const fillCol = info.owned ? COL_OWNED : COL_DEFAULT;
-    this.drawBg(bg, fillCol, borderCol, 1);
+    drawRect(bg, ITEM_W, ITEM_H, ITEM_R, fillCol, borderCol, 1);
   }
 
   private updateButton(
@@ -179,7 +177,7 @@ export class ShopPanel {
       : canBuy ? COL_BORDER : COL_LOCKED_BORDER;
     const fillCol = owned ? COL_OWNED : COL_DEFAULT;
 
-    this.drawBg(btn.bg, fillCol, borderCol, 1);
+    drawRect(btn.bg, ITEM_W, ITEM_H, ITEM_R, fillCol, borderCol, 1);
 
     // Update status text
     if (owned) {
@@ -200,14 +198,5 @@ export class ShopPanel {
     btn.ctr.eventMode = canBuy ? 'static' : 'none';
     btn.ctr.cursor = canBuy ? 'pointer' : 'default';
     btn.ctr.alpha = canBuy ? 1.0 : owned ? 0.7 : 0.5;
-  }
-
-  private drawBg(
-    g: Graphics, fill: number, stroke: number, strokeW: number,
-  ): void {
-    g.clear();
-    g.roundRect(0, 0, ITEM_W, ITEM_H, ITEM_R);
-    g.fill(fill);
-    g.stroke({ color: stroke, width: strokeW });
   }
 }
