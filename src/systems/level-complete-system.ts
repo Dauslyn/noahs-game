@@ -22,12 +22,18 @@ const VICTORY_DELAY = 2.5;
  */
 const GRACE_PERIOD = 1.0;
 
+/** Stats passed to the victory callback when the level is completed. */
+export interface VictoryCallbackStats {
+  enemiesKilled: number;
+  timeSeconds: number;
+}
+
 export class LevelCompleteSystem implements System {
   readonly priority = 55;
 
   private readonly worldContainer: Container;
   private readonly soundManager: SoundManager;
-  private readonly onLevelComplete: () => void;
+  private readonly onLevelComplete: (stats: VictoryCallbackStats) => void;
 
   /** Whether the level has a boss that still needs to be spawned. */
   private readonly hasBoss: boolean;
@@ -41,17 +47,20 @@ export class LevelCompleteSystem implements System {
   /** Countdown until hub transition. */
   private victoryTimer = 0;
 
+  /** Entity IDs of enemies observed dead (survives entity destruction). */
+  private readonly deadSeen = new Set<number>();
+
   /**
    * @param worldContainer  - PixiJS container for floating text
    * @param soundManager    - audio manager for victory sound
    * @param hasBoss         - whether the level has a boss encounter
-   * @param onLevelComplete - callback to transition back to hub
+   * @param onLevelComplete - callback with stats to transition back to hub
    */
   constructor(
     worldContainer: Container,
     soundManager: SoundManager,
     hasBoss: boolean,
-    onLevelComplete: () => void,
+    onLevelComplete: (stats: VictoryCallbackStats) => void,
   ) {
     this.worldContainer = worldContainer;
     this.soundManager = soundManager;
@@ -64,7 +73,10 @@ export class LevelCompleteSystem implements System {
     if (this.victoryTriggered) {
       this.victoryTimer -= dt;
       if (this.victoryTimer <= 0) {
-        this.onLevelComplete();
+        this.onLevelComplete({
+          enemiesKilled: this.deadSeen.size,
+          timeSeconds: this.elapsed,
+        });
       }
       return;
     }
@@ -72,6 +84,9 @@ export class LevelCompleteSystem implements System {
     // Grace period: don't check too early
     this.elapsed += dt;
     if (this.elapsed < GRACE_PERIOD) return;
+
+    // Record any newly-dead enemies into the kill set
+    this.updateKillCount(world);
 
     // Don't complete while player is dead
     const players = world.query('player', 'health');
@@ -123,5 +138,18 @@ export class LevelCompleteSystem implements System {
     }
 
     return true;
+  }
+
+  /**
+   * Record entity IDs of dead enemies into deadSeen set.
+   * Entities that are later destroyed (removed from world) remain in the
+   * set, so the total count is accurate even across multiple frames.
+   */
+  private updateKillCount(world: World): void {
+    const enemies = world.query('enemy', 'health');
+    for (const e of enemies) {
+      const h = world.getComponent(e, 'health');
+      if (h && h.isDead) this.deadSeen.add(e);
+    }
   }
 }

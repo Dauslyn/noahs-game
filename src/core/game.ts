@@ -38,6 +38,7 @@ import { spawnEnemies } from '../level/spawn-enemies.js';
 import { BossTriggerSystem } from '../systems/boss-trigger-system.js';
 import { BossAISystem } from '../systems/boss-ai-system.js';
 import { LevelCompleteSystem } from '../systems/level-complete-system.js';
+import { VictoryScreen } from '../ui/victory-screen.js';
 
 type Scene = 'planet-select' | 'gameplay';
 const BACKGROUND_COLOR = 0x0a0a2e;
@@ -55,6 +56,7 @@ export class Game {
   private starfield!: StarfieldSystem;
   private parallaxBg: ParallaxBgSystem | null = null;
   private gameState: GameState = createGameState();
+  private levelName = '';
 
   public worldContainer!: Container;
   public uiContainer!: Container;
@@ -121,10 +123,7 @@ export class Game {
 
     // 8. Show hub screen (weapon loadout + planet select)
     this.showHub();
-    console.log("[Noah's Game] Ready — select a weapon and deploy");
   }
-
-  // — Scene transitions —
 
   private showHub(): void {
     this.currentScene = 'planet-select';
@@ -143,6 +142,7 @@ export class Game {
   private startLevel(levelData: LevelData): void {
     this.hubScreen?.hide();
     this.hubScreen = null;
+    this.levelName = levelData.name;
     this.loadLevel(levelData);
     this.currentScene = 'gameplay';
   }
@@ -154,14 +154,13 @@ export class Game {
     this.showHub();
   }
 
-  /** Called by LevelCompleteSystem — return to hub with scrap intact. */
-  returnToHubVictory(): void {
-    this.unloadLevel();
-    this.showHub();
-    console.log('[Game] Level complete — returning to hub');
+  /** Called by LevelCompleteSystem — show victory screen, then return to hub. */
+  returnToHubVictory(stats: { enemiesKilled: number; timeSeconds: number }): void {
+    this.currentScene = 'planet-select'; // Freeze game loop
+    const s = { levelName: this.levelName, ...stats, scrapEarned: this.gameState.scrap };
+    const vs = new VictoryScreen(s, () => { this.unloadLevel(); this.showHub(); });
+    this.app.stage.addChild(vs.container);
   }
-
-  // — Level lifecycle —
 
   private loadLevel(levelData: LevelData): void {
     // Fresh physics world (WASM stays initialised)
@@ -225,7 +224,7 @@ export class Game {
     this.addSystem(new LevelCompleteSystem(
       this.worldContainer, this.soundManager,
       !!levelData.bossTriggerX,
-      () => this.returnToHubVictory(),
+      (stats) => this.returnToHubVictory(stats),
     ));
     this.addSystem(new HudSystem(this.uiContainer, this.gameState));
     this.addSystem(new AnimationSystem());
