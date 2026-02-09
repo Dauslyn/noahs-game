@@ -5,6 +5,8 @@
  * converts them to Rapier metres when creating physics bodies.
  */
 
+import type { EnvironmentTheme } from './biome-config.js';
+
 // ---------------------------------------------------------------------------
 // Interfaces
 // ---------------------------------------------------------------------------
@@ -39,6 +41,8 @@ export interface LevelData {
   name: string;
   /** Difficulty label shown on planet select. */
   difficulty: 'Easy' | 'Medium' | 'Hard';
+  /** Visual biome theme for backgrounds and platform tinting. */
+  environmentTheme: EnvironmentTheme;
   /** Total level width (pixels). */
   width: number;
   /** Total level height (pixels). */
@@ -66,6 +70,7 @@ export interface LevelData {
 export const PROTOTYPE_LEVEL: LevelData = {
   name: 'Zeta Station',
   difficulty: 'Easy',
+  environmentTheme: 'sci-fi-interior',
   width: 2560,
   height: 1440,
 

@@ -14,6 +14,7 @@ import type { LevelData } from './level-data.js';
 export const CRYSTAL_CAVERNS: LevelData = {
   name: 'Crystal Caverns',
   difficulty: 'Medium',
+  environmentTheme: 'another-world',
   width: 3200,
   height: 1600,
 
@@ -76,6 +77,7 @@ export const CRYSTAL_CAVERNS: LevelData = {
 export const NEON_OUTPOST: LevelData = {
   name: 'Neon Outpost',
   difficulty: 'Hard',
+  environmentTheme: 'cyberpunk',
   width: 2800,
   height: 1400,
 
