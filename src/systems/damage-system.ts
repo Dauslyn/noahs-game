@@ -235,6 +235,7 @@ export class DamageSystem implements System {
       case 'flyer': return 8;
       case 'crawler': return 9;
       case 'turret': return 10;
+      case 'shielder': return 12;
       default: return 5;
     }
   }

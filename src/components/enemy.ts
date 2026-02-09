@@ -38,6 +38,8 @@ export interface EnemyComponent extends Component {
   detectionRange: number;
   /** Current AI state. */
   state: EnemyState;
+  /** Shield facing direction for shielders: -1 = left, 1 = right. */
+  shieldDirection: PatrolDirection;
 }
 
 /** Options for createEnemy beyond the required fields. */
@@ -46,6 +48,7 @@ interface EnemyOptions {
   patrolOriginX?: number;
   patrolOriginY?: number;
   actionTimer?: number;
+  shieldDirection?: PatrolDirection;
 }
 
 /** Create an EnemyComponent with sensible defaults for optional fields. */
@@ -66,5 +69,6 @@ export function createEnemy(
     contactDamage,
     detectionRange,
     state: 'patrolling',
+    shieldDirection: opts.shieldDirection ?? 1,
   };
 }

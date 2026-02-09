@@ -25,6 +25,7 @@ import {
   updateSentry,
   updateCrawler,
 } from './enemy-ai-behaviours-2.js';
+import { updateShielder } from './enemy-ai-behaviours-3.js';
 
 // ---------------------------------------------------------------------------
 // System
@@ -108,6 +109,13 @@ export class EnemyAISystem implements System {
           updateCrawler(
             this.physicsCtx, enemy, pb.bodyHandle,
             transform, playerTransform, inRange, dt,
+          );
+          break;
+        case 'shielder':
+          updateShielder(
+            this.physicsCtx, enemy, pb.bodyHandle,
+            transform, playerTransform, inRange, dt,
+            world.getComponent(entity, 'sprite'),
           );
           break;
       }

@@ -17,13 +17,7 @@ import type { PhysicsBodyComponent } from '../components/physics-body.js';
 import type { SpriteComponent } from '../components/sprite.js';
 import { toPhysicsPos } from '../core/physics.js';
 import { RESPAWN_DELAY, INVINCIBILITY_DURATION } from '../core/constants.js';
-import {
-  createWalkerEnemy,
-  createFlyerEnemy,
-  createTurretEnemy,
-  createSentryEnemy,
-  createCrawlerEnemy,
-} from '../entities/create-enemy.js';
+import { spawnEnemies } from '../level/spawn-enemies.js';
 import type { SoundManager } from '../audio/sound-manager.js';
 
 // ---------------------------------------------------------------------------
@@ -199,55 +193,23 @@ export class DeathRespawnSystem implements System {
   /**
    * Compare the expected enemy spawn points against living enemies.
    * If fewer enemies exist than expected, spawn new ones at the
-   * original positions.
+   * original positions. Delegates to the shared spawnEnemies helper.
    */
   private respawnEnemies(world: World): void {
     const livingEnemies = world.query('enemy');
-    const expectedCount = this.enemySpawnPoints.length;
+    if (livingEnemies.length >= this.enemySpawnPoints.length) return;
 
-    // If all enemies are alive, nothing to do
-    if (livingEnemies.length >= expectedCount) return;
-
-    // Build a set of occupied spawn positions (to avoid duplicates).
-    // patrolOriginX matches the spawn X passed to createEnemy().
+    // Build a set of occupied spawn X positions to avoid duplicates
     const occupied = new Set<string>();
     for (const entity of livingEnemies) {
       const enemy = world.getComponent(entity, 'enemy');
-      if (!enemy) continue;
-      occupied.add(`${enemy.patrolOriginX}`);
+      if (enemy) occupied.add(`${enemy.patrolOriginX}`);
     }
 
-    // Recreate enemies at unoccupied spawn points
-    for (const sp of this.enemySpawnPoints) {
-      if (occupied.has(`${sp.x}`)) continue;
-
-      switch (sp.type) {
-        case 'enemy-walker':
-          createWalkerEnemy(
-            world, this.physicsCtx, this.worldContainer, sp.x, sp.y,
-          );
-          break;
-        case 'enemy-flyer':
-          createFlyerEnemy(
-            world, this.physicsCtx, this.worldContainer, sp.x, sp.y,
-          );
-          break;
-        case 'enemy-turret':
-          createTurretEnemy(
-            world, this.physicsCtx, this.worldContainer, sp.x, sp.y,
-          );
-          break;
-        case 'enemy-sentry':
-          createSentryEnemy(
-            world, this.physicsCtx, this.worldContainer, sp.x, sp.y,
-          );
-          break;
-        case 'enemy-crawler':
-          createCrawlerEnemy(
-            world, this.physicsCtx, this.worldContainer, sp.x, sp.y,
-          );
-          break;
-      }
-    }
+    // Filter to unoccupied spawn points, then use shared spawner
+    const missing = this.enemySpawnPoints.filter(
+      (sp) => !occupied.has(`${sp.x}`),
+    );
+    spawnEnemies(missing, world, this.physicsCtx, this.worldContainer);
   }
 }

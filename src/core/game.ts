@@ -200,7 +200,7 @@ export class Game {
     this.addSystem(new WeaponSystem(
       this.physicsCtx, this.worldContainer, this.soundManager,
     ));
-    this.addSystem(new ProjectileSystem(this.entityManager));
+    this.addSystem(new ProjectileSystem(this.entityManager, this.soundManager));
     this.addSystem(new DamageSystem(
       this.physicsCtx, this.soundManager, this.entityManager,
       this.gameState, this.worldContainer,

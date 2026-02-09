@@ -14,6 +14,7 @@
 import type { System } from '../core/types.js';
 import type { World } from '../core/world.js';
 import type { EntityManager } from '../core/entity-manager.js';
+import type { SoundManager } from '../audio/sound-manager.js';
 
 /** Distance in pixels at which a projectile "hits" an enemy. */
 const HIT_DISTANCE = 15;
@@ -22,12 +23,15 @@ export class ProjectileSystem implements System {
   readonly priority = 35;
 
   private readonly entityManager: EntityManager;
+  private readonly soundManager: SoundManager;
 
   /**
    * @param entityManager - centralised manager for deferred entity destruction
+   * @param soundManager  - audio manager for deflect sound
    */
-  constructor(entityManager: EntityManager) {
+  constructor(entityManager: EntityManager, soundManager: SoundManager) {
     this.entityManager = entityManager;
+    this.soundManager = soundManager;
   }
 
   /**
@@ -68,6 +72,24 @@ export class ProjectileSystem implements System {
         const dist = Math.sqrt(dx * dx + dy * dy);
 
         if (dist < HIT_DISTANCE) {
+          // Check shielder shield: block projectile if hitting shielded side
+          const enemy = world.getComponent(enemyEntity, 'enemy');
+          if (enemy && enemy.enemyType === 'shielder' && enemy.state !== 'idle') {
+            // Projectile approaching from left: dx > 0 (enemy right of proj)
+            // Shield direction 1 = facing right, -1 = facing left
+            const approachFromRight = dx < 0;
+            const approachFromLeft = dx > 0;
+            const shieldBlocksRight = enemy.shieldDirection === 1 && approachFromLeft;
+            const shieldBlocksLeft = enemy.shieldDirection === -1 && approachFromRight;
+
+            if (shieldBlocksRight || shieldBlocksLeft) {
+              // Deflected! Destroy projectile, no damage
+              this.entityManager.markForDestruction(entity);
+              this.soundManager.play('shield-break');
+              break;
+            }
+          }
+
           // Apply damage if the enemy has a health component
           const health = world.getComponent(enemyEntity, 'health');
           if (health && !health.isDead && health.invincibleTimer <= 0) {
