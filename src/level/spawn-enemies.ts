@@ -13,6 +13,7 @@ import {
   createTurretEnemy,
   createSentryEnemy,
   createCrawlerEnemy,
+  createShielderEnemy,
 } from '../entities/create-enemy.js';
 
 /**
@@ -41,6 +42,9 @@ export function spawnEnemies(
         break;
       case 'enemy-crawler':
         createCrawlerEnemy(world, physicsCtx, worldContainer, sp.x, sp.y);
+        break;
+      case 'enemy-shielder':
+        createShielderEnemy(world, physicsCtx, worldContainer, sp.x, sp.y);
         break;
     }
   }

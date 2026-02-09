@@ -135,6 +135,9 @@ export const NEON_OUTPOST: LevelData = {
     { x: 800, y: 520, type: 'enemy-turret' },
     { x: 1600, y: 420, type: 'enemy-flyer' },
     { x: 1400, y: 270, type: 'enemy-turret' },
+    // Shielders patrol tight corridors — force flanking
+    { x: 1150, y: 1020, type: 'enemy-shielder' },
+    { x: 2150, y: 920, type: 'enemy-shielder' },
   ],
 };
 
