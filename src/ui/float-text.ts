@@ -4,6 +4,7 @@
  */
 
 import { Text, TextStyle, Container } from 'pixi.js';
+import { GlowFilter } from 'pixi-filters';
 
 /** Upward drift speed (pixels per second). */
 const FLOAT_SPEED = 40;
@@ -37,6 +38,14 @@ export function spawnFloatText(
   text.anchor.set(0.5, 0.5);
   text.x = x;
   text.y = y;
+
+  // Golden glow around scrap pickup text for visual polish
+  text.filters = [new GlowFilter({
+    color: 0xffcc00,
+    outerStrength: 2,
+    distance: 8,
+  })];
+
   container.addChild(text);
 
   const startTime = performance.now();
