@@ -138,9 +138,22 @@ export class ParallaxBgSystem implements System {
     }
   }
 
-  // -----------------------------------------------------------------------
-  // Update
-  // -----------------------------------------------------------------------
+  /** Show or hide all parallax layer sprites. */
+  setVisible(visible: boolean): void {
+    for (const layer of this.layers) {
+      layer.sprite.visible = visible;
+    }
+  }
+
+  /** Remove all parallax sprites from the stage and clean up filters. */
+  destroy(stage: Container): void {
+    for (const layer of this.layers) {
+      stage.removeChild(layer.sprite);
+      layer.sprite.destroy();
+    }
+    this.layers.length = 0;
+    this.godray = null;
+  }
 
   /**
    * Offset each layer's tile position based on the player's world-space
@@ -150,25 +163,6 @@ export class ParallaxBgSystem implements System {
    * @param world - ECS world (used to find the player)
    * @param dt    - delta time in seconds (used for godray animation)
    */
-
-  /**
-   * Show or hide all parallax layer sprites.
-   */
-  setVisible(visible: boolean): void {
-    for (const layer of this.layers) {
-      layer.sprite.visible = visible;
-    }
-  }
-
-  /** Remove all parallax sprites from the stage. */
-  destroy(stage: Container): void {
-    for (const layer of this.layers) {
-      stage.removeChild(layer.sprite);
-      layer.sprite.destroy();
-    }
-    this.layers.length = 0;
-  }
-
   update(world: World, dt: number): void {
     if (this.layers.length === 0) return;
 

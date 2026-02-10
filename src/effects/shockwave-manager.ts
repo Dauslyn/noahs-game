@@ -83,6 +83,13 @@ export class ShockwaveManager {
     if (changed) this.syncFilters();
   }
 
+  /** Clear all active shockwaves and null the singleton. Call on level unload. */
+  destroy(): void {
+    this.active.length = 0;
+    this.syncFilters();
+    ShockwaveManager.instance = null;
+  }
+
   /**
    * Rebuild the container's filter array: keep non-shockwave filters
    * and append active shockwave filters.

@@ -138,6 +138,8 @@ export class ShipInterior {
     window.removeEventListener('keydown', this.handleKeyDown);
     window.removeEventListener('keyup', this.handleKeyUp);
     this.prompt.destroy();
+    this.crtFilters.length = 0;
+    this.stationGlows.length = 0;
     this.container.destroy({ children: true });
   }
 

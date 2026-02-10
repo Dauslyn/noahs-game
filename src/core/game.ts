@@ -21,8 +21,7 @@ import { DeathRespawnSystem } from '../systems/death-respawn-system.js';
 import { StarfieldSystem } from '../systems/starfield-system.js';
 import { ParallaxBgSystem } from '../systems/parallax-bg-system.js';
 import { getBiomeConfig } from '../level/biome-config.js';
-import { createGameState, applyDeathPenalty } from './game-state.js';
-import type { GameState } from './game-state.js';
+import { createGameState, applyDeathPenalty, type GameState } from './game-state.js';
 import { HudSystem } from '../systems/hud-system.js';
 import { SoundManager } from '../audio/sound-manager.js';
 import { EffectsSystem, createWorldBloom } from '../systems/effects-system.js';
@@ -239,7 +238,8 @@ export class Game {
   }
 
   private unloadLevel(): void {
-    this.systems = []; this.entityManager.destroyAll(this.world);
+    this.systems = [];
+    this.entityManager.destroyAll(this.world);
     this.worldContainer.removeChildren(); this.uiContainer.removeChildren();
     this.worldContainer.x = 0; this.worldContainer.y = 0;
   }
