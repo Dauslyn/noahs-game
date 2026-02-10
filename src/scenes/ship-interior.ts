@@ -4,6 +4,7 @@
  */
 
 import { Container, Graphics, Text, TextStyle } from 'pixi.js';
+import { CRTFilter } from 'pixi-filters';
 import { MONO } from '../ui/ui-helpers.js';
 import { InteractPrompt } from '../ui/interact-prompt.js';
 
@@ -43,6 +44,7 @@ export class ShipInterior {
   private nearStation: Station | null = null;
   private onAction: (action: ShipAction) => void;
   private stationGlows: Graphics[] = [];
+  private readonly crtFilters: CRTFilter[] = [];
   private glowTime = 0;
 
   private keysDown = new Set<string>();
@@ -127,6 +129,8 @@ export class ShipInterior {
     for (let i = 0; i < this.stationGlows.length; i++) {
       this.stationGlows[i].alpha = 0.15 + Math.sin(this.glowTime * 2 + i * 1.2) * 0.1;
     }
+    // Animate CRT scanline scroll on station panels
+    for (const crt of this.crtFilters) crt.time += dt;
     this.keysJustPressed.clear();
   }
 
@@ -180,6 +184,12 @@ export class ShipInterior {
     for (let sy = FLOOR_Y - 78; sy < FLOOR_Y - 50; sy += 4) {
       g.rect(st.x - 18, sy, 36, 1); g.fill({ color: st.color, alpha: 0.05 });
     }
+    // CRT scanline effect for retro-future terminal look
+    const crt = new CRTFilter({
+      curvature: 0, lineWidth: 1, lineContrast: 0.15, noise: 0.05, vignetting: 0,
+    });
+    g.filters = [crt];
+    this.crtFilters.push(crt);
     this.roomContainer.addChild(g);
 
     // Glow orb (animated via update)
