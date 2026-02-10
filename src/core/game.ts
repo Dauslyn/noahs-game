@@ -231,16 +231,16 @@ export class Game {
     ));
     this.addSystem(new HudSystem(this.uiContainer, this.gameState));
     this.addSystem(new AnimationSystem());
-    this.addSystem(new EffectsSystem());
+    const fx = new EffectsSystem();
+    fx.setWorldContainer(this.worldContainer);
+    this.addSystem(fx);
     this.addSystem(cam);
     this.addSystem(new RenderSystem(this.worldContainer));
   }
 
   private unloadLevel(): void {
-    this.systems = [];
-    this.entityManager.destroyAll(this.world);
-    this.worldContainer.removeChildren();
-    this.uiContainer.removeChildren();
+    this.systems = []; this.entityManager.destroyAll(this.world);
+    this.worldContainer.removeChildren(); this.uiContainer.removeChildren();
     this.worldContainer.x = 0; this.worldContainer.y = 0;
   }
 

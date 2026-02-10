@@ -1,12 +1,10 @@
-/**
- * EffectsSystem -- visual effects (glow, bloom, shadows, damage flash).
- * Priority 95: runs after gameplay but before RenderSystem (100).
- */
+/** EffectsSystem -- visual effects (glow, bloom, shadows, shockwave, damage flash). */
 
 import { GlowFilter, AdvancedBloomFilter, DropShadowFilter } from 'pixi-filters';
 import type { Container, Filter } from 'pixi.js';
 import type { System, Entity } from '../core/types.js';
 import type { World } from '../core/world.js';
+import { ShockwaveManager } from '../effects/shockwave-manager.js';
 
 /** Duration of the damage-flash in seconds. */
 const DAMAGE_FLASH_DURATION = 0.12;
@@ -68,6 +66,12 @@ export class EffectsSystem implements System {
 
   /** Tracks which entities already have a drop shadow applied. */
   private readonly shadowEntities = new Set<Entity>();
+  private shockwaveManager: ShockwaveManager | null = null;
+
+  /** Set the world container for shockwave effects. Call once after construction. */
+  setWorldContainer(container: Container): void {
+    this.shockwaveManager = new ShockwaveManager(container);
+  }
 
   /**
    * Called once per frame.
@@ -77,6 +81,7 @@ export class EffectsSystem implements System {
   update(world: World, dt: number): void {
     this.elapsed += dt;
 
+    this.shockwaveManager?.update(dt);
     this.updateMechGlow(world);
     this.applyProjectileGlow(world);
     this.applyDropShadow(world);
