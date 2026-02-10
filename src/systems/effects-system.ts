@@ -1,10 +1,9 @@
-/** EffectsSystem -- visual effects (glow, bloom, shadows, shockwave, damage flash). */
+/** EffectsSystem -- visual effects (glow, bloom, damage flash). */
 
-import { GlowFilter, AdvancedBloomFilter, DropShadowFilter } from 'pixi-filters';
+import { GlowFilter, AdvancedBloomFilter } from 'pixi-filters';
 import type { Container, Filter } from 'pixi.js';
 import type { System, Entity } from '../core/types.js';
 import type { World } from '../core/world.js';
-import { ShockwaveManager } from '../effects/shockwave-manager.js';
 
 /** Duration of the damage-flash in seconds. */
 const DAMAGE_FLASH_DURATION = 0.12;
@@ -64,15 +63,6 @@ export class EffectsSystem implements System {
    */
   private readonly mechGlows = new Map<Entity, GlowFilter>();
 
-  /** Tracks which entities already have a drop shadow applied. */
-  private readonly shadowEntities = new Set<Entity>();
-  private shockwaveManager: ShockwaveManager | null = null;
-
-  /** Set the world container for shockwave effects. Call once after construction. */
-  setWorldContainer(container: Container): void {
-    this.shockwaveManager = new ShockwaveManager(container);
-  }
-
   /**
    * Called once per frame.
    * @param world - the ECS world to query
@@ -81,10 +71,8 @@ export class EffectsSystem implements System {
   update(world: World, dt: number): void {
     this.elapsed += dt;
 
-    this.shockwaveManager?.update(dt);
     this.updateMechGlow(world);
     this.applyProjectileGlow(world);
-    this.applyDropShadow(world);
     this.handleDamageFlash(world, dt);
     this.cleanupDestroyedEntities(world);
   }
@@ -140,28 +128,6 @@ export class EffectsSystem implements System {
       });
       this.applyFilter(sprite.displayObject, glow);
       this.glowEntities.add(entity);
-    }
-  }
-
-  /**
-   * Apply a subtle drop shadow to entities with health (player + enemies).
-   * Projectiles and other non-health entities are excluded.
-   */
-  private applyDropShadow(world: World): void {
-    const entities = world.query('sprite', 'health');
-    for (const entity of entities) {
-      if (this.shadowEntities.has(entity)) continue;
-      const sprite = world.getComponent(entity, 'sprite');
-      if (!sprite) continue;
-      // Downward shadow to visually ground characters to platforms
-      const shadow = new DropShadowFilter({
-        offset: { x: 0, y: 4 },
-        color: 0x000000,
-        alpha: 0.3,
-        blur: 2,
-      });
-      this.applyFilter(sprite.displayObject, shadow);
-      this.shadowEntities.add(entity);
     }
   }
 
@@ -225,10 +191,6 @@ export class EffectsSystem implements System {
         this.flashTimers.delete(entity);
         this.originalTints.delete(entity);
       }
-    }
-
-    for (const entity of this.shadowEntities) {
-      if (!world.hasEntity(entity)) this.shadowEntities.delete(entity);
     }
   }
 

@@ -230,9 +230,7 @@ export class Game {
     ));
     this.addSystem(new HudSystem(this.uiContainer, this.gameState));
     this.addSystem(new AnimationSystem());
-    const fx = new EffectsSystem();
-    fx.setWorldContainer(this.worldContainer);
-    this.addSystem(fx);
+    this.addSystem(new EffectsSystem());
     this.addSystem(cam);
     this.addSystem(new RenderSystem(this.worldContainer));
   }

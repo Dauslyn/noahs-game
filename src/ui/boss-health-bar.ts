@@ -5,7 +5,6 @@
  */
 
 import { Container, Graphics, Text, TextStyle } from 'pixi.js';
-import { GlowFilter } from 'pixi-filters';
 
 /** Bar dimensions (pixels). */
 const BAR_WIDTH = 400;
@@ -34,8 +33,6 @@ export class BossHealthBar {
   private readonly border: Graphics;
   private readonly nameLabel: Text;
   private readonly phaseLabel: Text;
-  private enrageGlow: GlowFilter | null = null;
-
   constructor() {
     this.container = new Container();
     this.container.visible = false;
@@ -104,21 +101,10 @@ export class BossHealthBar {
     else if (phase === 2) this.phaseLabel.style.fill = 0xffaa44;
     else this.phaseLabel.style.fill = 0xcccccc;
 
-    // Red glow on entire health bar during Phase 3 enrage
-    if (phase >= 3 && !this.enrageGlow) {
-      this.enrageGlow = new GlowFilter({
-        color: 0xff0000,
-        outerStrength: 3,
-        distance: 10,
-      });
-      this.container.filters = [this.enrageGlow];
-    }
   }
 
-  /** Hide the boss health bar and reset enrage glow. */
+  /** Hide the boss health bar. */
   hide(): void {
     this.container.visible = false;
-    this.enrageGlow = null;
-    this.container.filters = [];
   }
 }

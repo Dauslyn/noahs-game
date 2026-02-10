@@ -4,7 +4,6 @@
  */
 
 import { Text, TextStyle, Container } from 'pixi.js';
-import { GlowFilter } from 'pixi-filters';
 
 /** Upward drift speed (pixels per second). */
 const FLOAT_SPEED = 40;
@@ -27,23 +26,17 @@ const FLOAT_STYLE = new TextStyle({
  * @param x - world X position (pixels)
  * @param y - world Y position (pixels)
  * @param message - text to display (e.g. "+5")
- * @param glowColor - optional glow color (omit for no glow)
  */
 export function spawnFloatText(
   container: Container,
   x: number,
   y: number,
   message: string,
-  glowColor?: number,
 ): void {
   const text = new Text({ text: message, style: FLOAT_STYLE });
   text.anchor.set(0.5, 0.5);
   text.x = x;
   text.y = y;
-
-  if (glowColor !== undefined) {
-    text.filters = [new GlowFilter({ color: glowColor, outerStrength: 2, distance: 8 })];
-  }
 
   container.addChild(text);
 

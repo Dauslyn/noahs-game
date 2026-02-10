@@ -24,7 +24,6 @@ import {
 import type { SoundManager } from '../audio/sound-manager.js';
 import type { CameraSystem } from './camera-system.js';
 import { trySpawnMinions } from './boss-phase3.js';
-import { ShockwaveManager } from '../effects/shockwave-manager.js';
 
 /** Phase 2 HP threshold (60% of 300). */
 const PHASE2_HP = 180;
@@ -102,13 +101,9 @@ export class BossAISystem implements System {
           break;
       }
 
-      // Screen shake + shockwave when boss finishes a charge (wall impact)
+      // Screen shake when boss finishes a charge (wall impact)
       if (prevState === 'charging' && boss.attackState === 'cooldown') {
         this.camera.shake(8, 0.3);
-        // Convert world position to screen-space for shockwave center
-        const sx = transform.x + this.worldContainer.x;
-        const sy = transform.y + this.worldContainer.y;
-        ShockwaveManager.instance?.trigger(sx, sy, 12, 100, 500, 0.5);
       }
 
       // Phase 3: attempt minion spawning each frame
@@ -128,21 +123,11 @@ export class BossAISystem implements System {
       boss.phase = 2;
       this.soundManager.play('boss-phase-up');
       this.camera.shake(6, 0.5);
-      this.triggerPhaseShockwave();
     } else if (boss.phase === 2 && currentHp <= PHASE3_HP) {
       boss.phase = 3;
       this.soundManager.play('boss-phase-up');
       this.camera.shake(10, 0.8);
-      this.triggerPhaseShockwave();
     }
-  }
-
-  /** Fire a centered shockwave for boss phase transitions. */
-  private triggerPhaseShockwave(): void {
-    // Center of screen for dramatic phase-change ripple
-    const cx = window.innerWidth / 2;
-    const cy = window.innerHeight / 2;
-    ShockwaveManager.instance?.trigger(cx, cy, 15, 120, 400, 0.7);
   }
 
   /** Flash during windup, orange/red tint during charge, permanent red in Phase 3. */

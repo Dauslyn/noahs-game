@@ -226,7 +226,6 @@ export class DamageSystem implements System {
             transform.x,
             transform.y - 20,
             `+${scrapAmount}`,
-            0xffcc00,
           );
         }
       }

@@ -123,6 +123,9 @@ const COLOR_KEY_TOLERANCE = 15;
  * Replace a specific background color with transparency in a loaded texture.
  * Modifies the texture in-place using a canvas.
  *
+ * PixiJS 8 stores the resource as ImageBitmap (not HTMLImageElement),
+ * so we use CanvasRenderingContext2D.drawImage() which accepts both.
+ *
  * @param alias - texture alias to process
  * @param r     - red component of the key color (0-255)
  * @param g     - green component of the key color (0-255)
@@ -138,11 +141,24 @@ async function stripColorKey(
   if (!tex) return;
 
   const src = tex.source;
-  const resource = src.resource as HTMLImageElement | undefined;
-  if (!resource || !(resource instanceof HTMLImageElement)) return;
+  const resource = src.resource as CanvasImageSource | undefined;
 
-  const w = resource.naturalWidth;
-  const h = resource.naturalHeight;
+  // PixiJS 8 uses ImageBitmap; older versions use HTMLImageElement.
+  // Both are valid CanvasImageSource for drawImage().
+  if (
+    !resource ||
+    (!(resource instanceof HTMLImageElement) &&
+     !(resource instanceof ImageBitmap))
+  ) {
+    console.warn(`[stripColorKey] Unsupported resource type for '${alias}'`);
+    return;
+  }
+
+  const w = resource instanceof HTMLImageElement
+    ? resource.naturalWidth : resource.width;
+  const h = resource instanceof HTMLImageElement
+    ? resource.naturalHeight : resource.height;
+
   const canvas = document.createElement('canvas');
   canvas.width = w;
   canvas.height = h;

@@ -13,7 +13,6 @@
  */
 
 import { TilingSprite, Container } from 'pixi.js';
-import { GodrayFilter } from 'pixi-filters';
 import type { System } from '../core/types.js';
 import type { World } from '../core/world.js';
 import type { BiomeConfig } from '../level/biome-config.js';
@@ -61,9 +60,6 @@ export class ParallaxBgSystem implements System {
   /** Active parallax layers (0-2 depending on loaded textures). */
   private readonly layers: ParallaxLayer[] = [];
 
-  /** Godray filter applied to the sky layer (null if sky texture missing). */
-  private godray: GodrayFilter | null = null;
-
   /**
    * Build tiling sprite layers and insert them at the back of the stage.
    *
@@ -85,17 +81,6 @@ export class ParallaxBgSystem implements System {
       });
       // Scale the small 192x176 texture up so the repeat pattern isn't tiny
       skySprite.tileScale.set(SKY_TILE_SCALE, SKY_TILE_SCALE);
-
-      // Apply animated godray light beams over the sky layer
-      const godray = new GodrayFilter({
-        gain: 0.4,
-        lacunarity: 2.5,
-        alpha: biome.godrayAlpha ?? 0.25,
-        parallel: true,
-        angle: biome.godrayAngle ?? 30,
-      });
-      skySprite.filters = [godray];
-      this.godray = godray;
 
       stage.addChildAt(skySprite, insertIndex);
       insertIndex++;
@@ -152,22 +137,17 @@ export class ParallaxBgSystem implements System {
       layer.sprite.destroy();
     }
     this.layers.length = 0;
-    this.godray = null;
   }
 
   /**
    * Offset each layer's tile position based on the player's world-space
-   * position, creating the parallax scrolling effect. Also advances
-   * godray animation time for smooth light beam movement.
+   * position, creating the parallax scrolling effect.
    *
    * @param world - ECS world (used to find the player)
-   * @param dt    - delta time in seconds (used for godray animation)
+   * @param dt    - delta time in seconds
    */
-  update(world: World, dt: number): void {
+  update(world: World, _dt: number): void {
     if (this.layers.length === 0) return;
-
-    // Advance godray animation: time drives the fractal noise offset
-    if (this.godray) this.godray.time += dt * 0.5;
 
     // Find camera target from the player's transform
     const players = world.query('transform', 'player');
