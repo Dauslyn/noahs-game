@@ -17,6 +17,8 @@ export interface ProjectileComponent extends Component {
   lifetime: number;
   /** Travel speed (m/s). */
   speed: number;
+  /** Optional glow colour for the GlowFilter (hex). Falls back to yellow. */
+  glowColor?: number;
 }
 
 /**
@@ -25,12 +27,14 @@ export interface ProjectileComponent extends Component {
  * @param ownerEntity – entity that spawned this projectile
  * @param lifetime    – seconds before auto-despawn
  * @param speed       – travel speed (m/s)
+ * @param glowColor   – optional glow colour for the GlowFilter (hex)
  */
 export function createProjectile(
   damage: number,
   ownerEntity: Entity,
   lifetime: number,
   speed: number,
+  glowColor?: number,
 ): ProjectileComponent {
-  return { type: 'projectile', damage, ownerEntity, lifetime, speed };
+  return { type: 'projectile', damage, ownerEntity, lifetime, speed, glowColor };
 }

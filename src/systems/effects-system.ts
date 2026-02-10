@@ -114,7 +114,9 @@ export class EffectsSystem implements System {
   }
 
   /**
-   * Apply a yellow glow to any projectile that doesn't already have one.
+   * Apply a glow to any projectile that doesn't already have one.
+   * Uses the projectile's glowColor (set from weapon style) or falls
+   * back to yellow (0xffff44) for legacy/untyped projectiles.
    */
   private applyProjectileGlow(world: World): void {
     const projectiles = world.query('projectile', 'sprite');
@@ -123,10 +125,12 @@ export class EffectsSystem implements System {
       if (this.glowEntities.has(entity)) continue;
 
       const sprite = world.getComponent(entity, 'sprite');
-      if (!sprite) continue;
+      const proj = world.getComponent(entity, 'projectile');
+      if (!sprite || !proj) continue;
 
+      const color = proj.glowColor ?? 0xffff44;
       const glow = new GlowFilter({
-        color: 0xffff44,
+        color,
         outerStrength: 3,
         distance: 10,
       });

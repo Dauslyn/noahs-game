@@ -101,7 +101,7 @@ export function createProjectileEntity(
   const speed = Math.sqrt(vx * vx + vy * vy);
   world.addComponent(
     entity,
-    createProjectile(damage, ownerEntity, DEFAULT_LIFETIME, speed),
+    createProjectile(damage, ownerEntity, DEFAULT_LIFETIME, speed, style?.glowColor),
   );
 
   // -- Sci-fi laser bolt sprite (styled per weapon) --
