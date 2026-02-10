@@ -1,18 +1,10 @@
 /**
- * EffectsSystem -- applies visual effects (glow, bloom, damage flash)
- * to entities based on their component types.
- *
- * Priority 95: runs after gameplay systems but before RenderSystem (100)
- * so that filters are applied before the final render pass.
- *
- * Responsibilities:
- *   1. Apply cyan glow to the mech companion (pulsing "breathing" effect).
- *   2. Apply yellow glow to new projectiles.
- *   3. Flash entities white briefly when they take damage (invincibleTimer).
+ * EffectsSystem -- visual effects (glow, bloom, shadows, damage flash).
+ * Priority 95: runs after gameplay but before RenderSystem (100).
  */
 
-import { GlowFilter, AdvancedBloomFilter } from 'pixi-filters';
-import type { Container } from 'pixi.js';
+import { GlowFilter, AdvancedBloomFilter, DropShadowFilter } from 'pixi-filters';
+import type { Container, Filter } from 'pixi.js';
 import type { System, Entity } from '../core/types.js';
 import type { World } from '../core/world.js';
 
@@ -74,6 +66,9 @@ export class EffectsSystem implements System {
    */
   private readonly mechGlows = new Map<Entity, GlowFilter>();
 
+  /** Tracks which entities already have a drop shadow applied. */
+  private readonly shadowEntities = new Set<Entity>();
+
   /**
    * Called once per frame.
    * @param world - the ECS world to query
@@ -84,6 +79,7 @@ export class EffectsSystem implements System {
 
     this.updateMechGlow(world);
     this.applyProjectileGlow(world);
+    this.applyDropShadow(world);
     this.handleDamageFlash(world, dt);
     this.cleanupDestroyedEntities(world);
   }
@@ -120,11 +116,7 @@ export class EffectsSystem implements System {
     }
   }
 
-  /**
-   * Apply a glow to any projectile that doesn't already have one.
-   * Uses the projectile's glowColor (set from weapon style) or falls
-   * back to yellow (0xffff44) for legacy/untyped projectiles.
-   */
+  /** Apply a glow to any projectile that doesn't already have one. */
   private applyProjectileGlow(world: World): void {
     const projectiles = world.query('projectile', 'sprite');
 
@@ -143,6 +135,28 @@ export class EffectsSystem implements System {
       });
       this.applyFilter(sprite.displayObject, glow);
       this.glowEntities.add(entity);
+    }
+  }
+
+  /**
+   * Apply a subtle drop shadow to entities with health (player + enemies).
+   * Projectiles and other non-health entities are excluded.
+   */
+  private applyDropShadow(world: World): void {
+    const entities = world.query('sprite', 'health');
+    for (const entity of entities) {
+      if (this.shadowEntities.has(entity)) continue;
+      const sprite = world.getComponent(entity, 'sprite');
+      if (!sprite) continue;
+      // Downward shadow to visually ground characters to platforms
+      const shadow = new DropShadowFilter({
+        offset: { x: 0, y: 4 },
+        color: 0x000000,
+        alpha: 0.3,
+        blur: 2,
+      });
+      this.applyFilter(sprite.displayObject, shadow);
+      this.shadowEntities.add(entity);
     }
   }
 
@@ -207,6 +221,10 @@ export class EffectsSystem implements System {
         this.originalTints.delete(entity);
       }
     }
+
+    for (const entity of this.shadowEntities) {
+      if (!world.hasEntity(entity)) this.shadowEntities.delete(entity);
+    }
   }
 
   /**
@@ -214,7 +232,7 @@ export class EffectsSystem implements System {
    * @param displayObject - the PixiJS container to add the filter to
    * @param filter        - the filter instance to add
    */
-  private applyFilter(displayObject: Container, filter: GlowFilter): void {
+  private applyFilter(displayObject: Container, filter: Filter): void {
     const existing = displayObject.filters;
     if (Array.isArray(existing)) {
       displayObject.filters = [...existing, filter];
