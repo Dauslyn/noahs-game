@@ -39,8 +39,8 @@ import { BossTriggerSystem } from '../systems/boss-trigger-system.js';
 import { BossAISystem } from '../systems/boss-ai-system.js';
 import { LevelCompleteSystem } from '../systems/level-complete-system.js';
 import { VictoryScreen } from '../ui/victory-screen.js';
+import { SceneRouter } from './scene-router.js';
 
-type Scene = 'planet-select' | 'gameplay';
 const BACKGROUND_COLOR = 0x0a0a2e;
 
 export class Game {
@@ -51,7 +51,7 @@ export class Game {
   private systems: System[] = [];
   private inputManager!: InputManager;
   private soundManager!: SoundManager;
-  private currentScene: Scene = 'planet-select';
+  private sceneRouter = new SceneRouter();
   private hubScreen: HubScreen | null = null;
   private starfield!: StarfieldSystem;
   private parallaxBg: ParallaxBgSystem | null = null;
@@ -112,7 +112,7 @@ export class Game {
     // 7. Game loop (always ticks; gameplay systems only run in gameplay)
     this.app.ticker.add((ticker) => {
       const dt = Math.min(ticker.deltaMS / 1000, 0.1);
-      if (this.currentScene === 'gameplay') {
+      if (this.sceneRouter.gameplayActive) {
         this.entityManager.processDestroyQueue(this.world);
         for (const system of this.systems) {
           system.update(this.world, dt);
@@ -126,7 +126,7 @@ export class Game {
   }
 
   private showHub(): void {
-    this.currentScene = 'planet-select';
+    this.sceneRouter.transitionTo('ship');
 
     // Clean up previous parallax layers if any
     this.parallaxBg?.destroy(this.app.stage);
@@ -144,7 +144,7 @@ export class Game {
     this.hubScreen = null;
     this.levelName = levelData.name;
     this.loadLevel(levelData);
-    this.currentScene = 'gameplay';
+    this.sceneRouter.transitionTo('gameplay');
   }
 
   /** Called by DeathRespawnSystem after death delay. */
@@ -156,7 +156,7 @@ export class Game {
 
   /** Called by LevelCompleteSystem — show victory screen, then return to hub. */
   returnToHubVictory(stats: { enemiesKilled: number; timeSeconds: number }): void {
-    this.currentScene = 'planet-select'; // Freeze game loop
+    this.sceneRouter.transitionTo('ship'); // Freeze game loop
     const s = { levelName: this.levelName, ...stats, scrapEarned: this.gameState.scrap };
     const vs = new VictoryScreen(s, () => { this.unloadLevel(); this.showHub(); });
     this.app.stage.addChild(vs.container);
