@@ -24,11 +24,11 @@ export interface GameState {
 /** Fraction of scrap lost on death (0.5 = lose half). */
 const DEATH_SCRAP_PENALTY = 0.5;
 
-/** Create a fresh GameState with laser unlocked and ship tier 1. */
+/** Create a fresh GameState with laser equipped and ship tier 1. */
 export function createGameState(): GameState {
   return {
     scrap: 0,
-    equippedWeapon: null,
+    equippedWeapon: 'laser',
     unlockedWeapons: new Set<WeaponId>(['laser']),
     shipTier: 1,
     shieldCharge: false,
