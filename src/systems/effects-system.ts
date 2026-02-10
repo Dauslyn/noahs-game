@@ -11,7 +11,7 @@
  *   3. Flash entities white briefly when they take damage (invincibleTimer).
  */
 
-import { GlowFilter, BloomFilter } from 'pixi-filters';
+import { GlowFilter, AdvancedBloomFilter } from 'pixi-filters';
 import type { Container } from 'pixi.js';
 import type { System, Entity } from '../core/types.js';
 import type { World } from '../core/world.js';
@@ -32,11 +32,18 @@ const MECH_GLOW_AMPLITUDE = 0.8;
 const MECH_GLOW_PULSE_SPEED = 3;
 
 /**
- * Create the BloomFilter used on the world container.
- * Kept as a factory so game.ts can apply it at startup.
+ * Create the AdvancedBloomFilter used on the world container.
+ * Threshold-based bloom: only bright elements (lasers, glows, energy)
+ * bloom while dark backgrounds and platforms stay clean.
  */
-export function createWorldBloom(): BloomFilter {
-  return new BloomFilter({ strength: 0.3 });
+export function createWorldBloom(): AdvancedBloomFilter {
+  return new AdvancedBloomFilter({
+    threshold: 0.4,    // only things brighter than 40% bloom
+    bloomScale: 0.6,   // bloom intensity
+    brightness: 1.0,   // don't change base brightness
+    blur: 4,           // blur kernel size
+    quality: 4,        // blur quality passes
+  });
 }
 
 export class EffectsSystem implements System {
