@@ -3,7 +3,7 @@ class_name GeminiClient
 
 ## Gemini API Client
 ##
-## High-level client for Gemini 2.5 Flash Image API ("Nano Banana").
+## High-level client for Gemini 3 Image API.
 ## Provides simple interface for generating and editing images.
 ##
 ## Usage:
@@ -28,7 +28,7 @@ signal generation_complete(result)
 var api_key: String
 
 ## Model name (default: gemini-2.5-flash-image)
-var model_name: String = "gemini-2.5-flash-image"
+var model_name: String = "gemini-3-pro-image-preview"
 
 ## AI temperature (0.0 - 2.0)
 var temperature: float = 1.0

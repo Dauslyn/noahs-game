@@ -4,7 +4,7 @@ extends EditorPlugin
 ## AI Pixel Art Generator Plugin
 ##
 ## Main entry point for the Godot plugin that generates pixel art assets
-## using Google's Gemini 2.5 Flash Image API (Nano Banana).
+## using Google's Gemini 3 Image API.
 ##
 ## Initializes all plugin services and manages their lifecycle.
 
