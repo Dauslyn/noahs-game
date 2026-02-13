@@ -112,15 +112,15 @@ func _pick_random_patrol_direction() -> void:
 	_patrol_timer = randf_range(1.5, 3.0)
 
 
-## Load walker sprites from PixelLab output or fall back to placeholder.
+## Load walker sprites or fall back to placeholder.
 func _load_sprites() -> void:
-	var rot_path := "res://assets/characters/walker/rotations"
-	var anim_path := "res://assets/characters/walker/extracted/animations/walking"
-	var has_rotations := ResourceLoader.exists(rot_path + "/south.png")
+	var rot_path := "res://assets/enemies/walker/idle"
+	var anim_path := "res://assets/enemies/walker/walk"
+	var has_rotations := ResourceLoader.exists(rot_path + "/walker-idle-s.png")
 
 	if has_rotations:
-		var frames := SpriteLoader.load_rotations(rot_path)
-		# Load individual frame animations from extracted ZIP
+		var frames := SpriteLoader.load_rotations(rot_path, "walker-idle")
+		# Load walk animations if available
 		SpriteLoader.load_animation_frames(anim_path, "walk", frames, 8.0)
 		sprite.sprite_frames = frames
 		if frames.has_animation("static_south"):

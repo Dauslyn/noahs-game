@@ -68,11 +68,11 @@ func _physics_process(delta: float) -> void:
 	move_and_slide()
 
 
-## Load B3ANS sprites from PixelLab output or create teal placeholder.
+## Load B3ANS sprites or create teal placeholder.
 func _load_sprites() -> void:
-	var rot_path := "res://assets/characters/beans/rotations"
-	if ResourceLoader.exists(rot_path + "/south.png"):
-		var frames := SpriteLoader.load_rotations(rot_path)
+	var rot_path := "res://assets/characters/beans/idle"
+	if ResourceLoader.exists(rot_path + "/beans-idle-s.png"):
+		var frames := SpriteLoader.load_rotations(rot_path, "beans-idle")
 		sprite.sprite_frames = frames
 		sprite.play("static_south")
 	else:

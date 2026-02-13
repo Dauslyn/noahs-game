@@ -173,16 +173,17 @@ func _facing_to_direction_name() -> String:
 		return "north_east"
 
 
-## Load Noah's PixelLab sprites into AnimatedSprite2D.
+## Load Noah's sprites into AnimatedSprite2D.
+## Idle sprites: assets/characters/noah/idle/noah-idle-{s,sw,w,...}.png
+## Walk sprites: assets/characters/noah/walk/noah-walk-{s,sw,w,...}.png (when available)
 func _load_sprites() -> void:
+	# Load 8-directional idle as static frames (noah-idle-s.png, noah-idle-sw.png, etc.)
 	var frames := SpriteLoader.load_rotations(
-		"res://assets/characters/noah/rotations"
+		"res://assets/characters/noah/idle", "noah-idle"
 	)
-	# Load extracted individual frame animations (from ZIP)
-	var walk_dir := "res://assets/characters/noah/extracted/animations/walking"
-	var idle_dir := "res://assets/characters/noah/extracted/animations/breathing-idle"
+	# Load walk animations if they exist
+	var walk_dir := "res://assets/characters/noah/walk"
 	SpriteLoader.load_animation_frames(walk_dir, "walk", frames, 8.0)
-	SpriteLoader.load_animation_frames(idle_dir, "idle", frames, 6.0)
 	sprite.sprite_frames = frames
 	if frames.has_animation("idle_south"):
 		sprite.play("idle_south")

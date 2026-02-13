@@ -1,15 +1,27 @@
-## Loads PixelLab character rotations into SpriteFrames at runtime.
+## Loads character rotations and animations into SpriteFrames at runtime.
 ## Call from _ready() to set up AnimatedSprite2D nodes.
 class_name SpriteLoader
 
 
-## Direction names matching PixelLab output filenames.
+## Direction names used in animation names (underscored).
 const DIRECTIONS := [
 	"south", "south_west", "west", "north_west",
 	"north", "north_east", "east", "south_east"
 ]
 
-## PixelLab uses hyphens in filenames, we use underscores in animation names.
+## Short direction codes used in Ludo/Gemini filenames (e.g. noah-idle-sw.png).
+const DIR_SHORT_MAP := {
+	"south": "s",
+	"south_west": "sw",
+	"west": "w",
+	"north_west": "nw",
+	"north": "n",
+	"north_east": "ne",
+	"east": "e",
+	"south_east": "se",
+}
+
+## Hyphenated direction names for legacy PixelLab filenames (e.g. south-west.png).
 const DIR_FILE_MAP := {
 	"south": "south",
 	"south_west": "south-west",
@@ -24,21 +36,34 @@ const DIR_FILE_MAP := {
 
 ## Build SpriteFrames from rotation PNGs in a directory.
 ## Creates "static_south", "static_east", etc. animations (single-frame each).
-## base_path: e.g. "res://assets/characters/noah/rotations"
-static func load_rotations(base_path: String) -> SpriteFrames:
+## Supports two naming conventions:
+##   - Ludo/Gemini: "{prefix}-{s,sw,w,nw,n,ne,e,se}.png" (e.g. noah-idle-sw.png)
+##   - Legacy: "{south,south-west,...}.png" (e.g. south-west.png)
+## base_path: directory containing the PNGs
+## file_prefix: optional prefix for Ludo-style names (e.g. "noah-idle")
+static func load_rotations(base_path: String, file_prefix: String = "") -> SpriteFrames:
 	var frames := SpriteFrames.new()
 	# Remove the default "default" animation
 	if frames.has_animation("default"):
 		frames.remove_animation("default")
 
 	for dir_name in DIRECTIONS:
-		var file_name: String = DIR_FILE_MAP[dir_name]
-		var path := base_path + "/" + file_name + ".png"
+		var texture: Texture2D = null
 
-		if not ResourceLoader.exists(path):
-			continue
+		# Try Ludo/Gemini naming first: prefix-direction.png
+		if file_prefix != "":
+			var short_dir: String = DIR_SHORT_MAP[dir_name]
+			var path := base_path + "/" + file_prefix + "-" + short_dir + ".png"
+			if ResourceLoader.exists(path):
+				texture = load(path) as Texture2D
 
-		var texture := load(path) as Texture2D
+		# Fall back to legacy naming: direction.png
+		if not texture:
+			var file_name: String = DIR_FILE_MAP[dir_name]
+			var path := base_path + "/" + file_name + ".png"
+			if ResourceLoader.exists(path):
+				texture = load(path) as Texture2D
+
 		if not texture:
 			continue
 
@@ -97,8 +122,8 @@ static func load_animation_strips(
 			existing_frames.add_frame(anim_name, frame_tex)
 
 
-## Load animation from individual frame PNGs (PixelLab ZIP format).
-## frame_dir: e.g. "res://assets/characters/walker/extracted/animations/walking"
+## Load animation from individual frame PNGs in subdirectories.
+## frame_dir: e.g. "res://assets/characters/noah/walk"
 ## Contains subdirs per direction: south/, south-west/, etc. with frame_000.png, etc.
 static func load_animation_frames(
 	frame_dir: String,
