@@ -1,7 +1,7 @@
 # Noah's Game - Design Document
 
-**Date:** 2026-02-08
-**Status:** Approved
+**Date:** 2026-02-08 (Updated 2026-02-12)
+**Status:** Approved — Revised for Godot + Isometric
 **Authors:** Noah & Dad (with Claude)
 
 ---
@@ -9,32 +9,35 @@
 ## 1. Game Overview
 
 **Working Title:** Noah's Game (TBD)
-**Genre:** 2D Sci-Fi Space Platformer with Roguelite Progression and Trading
-**Platform:** Web browser (PC, keyboard + optional gamepad)
-**Art Style:** Pixel art (16-bit) with modern shader effects (glow, bloom, particles)
+**Genre:** Isometric Sci-Fi Space Roguelite with Exploration and Trading
+**Engine:** Godot 4.6 (GDScript)
+**Platform:** Desktop (PC/Mac), potentially web + mobile later
+**Art Style:** "Octopath Pixel" — HD pixel art with cinematic lighting, smooth gradients, bloom, atmospheric depth. NOT retro 16-bit. See `docs/art-style-bible.md` for full spec.
+**Perspective:** Isometric top-down (8-directional character movement)
 
-**Elevator Pitch:** You're a human explorer starting on Earth with a basic mech companion. Explore an open universe of alien planets - trade with friendly aliens, fight through hostile worlds, and upgrade your mech into an unstoppable swiss army knife. The further you push into the universe, the better the rewards and the deadlier the threats. Death is not the end - your ship and mech core persist, but your loadout resets, encouraging experimentation and new strategies each run.
+**Art Pipeline:** AI-generated sprites (Gemini API + Scenario AI) → chroma key processing → Godot import
+
+**Elevator Pitch:** You're a young explorer named Noah with a scrappy homemade space suit and a floating robot companion called B3ANS. Explore an open universe of alien planets — trade with friendly aliens, fight through hostile worlds, and upgrade your gear into an unstoppable loadout. The further you push into the universe, the better the rewards and the deadlier the threats. Death is not the end — your ship and unlocks persist, but your consumables reset, encouraging experimentation and new strategies each run.
 
 ---
 
 ## 2. Core Loop
 
-1. **Explore** a planet (platforming + mech utility/combat)
-2. **Collect** resources, loot, alien tech, mech parts
-3. **Return** to trade hubs - sell resources, buy upgrades, establish trade routes
-4. **Upgrade** your mech loadout and ship
-5. **Push further** into the universe to harder, more rewarding planets
-6. **Hit a wall** - planet too hostile, enemies too strong
-7. **Grind & prepare** - trade, upgrade, try different mech builds
+1. **Deploy** to a planet from your ship (isometric exploration + combat)
+2. **Explore** — fight enemies, discover secrets, collect scrap and alien tech
+3. **Survive** — clear all enemies or reach the extraction point
+4. **Return** to ship — spend scrap at the shop, change loadout, upgrade
+5. **Push further** — unlock new star systems with harder planets and better loot
+6. **Hit a wall** — planet too hostile, enemies too strong
+7. **Grind & prepare** — trade, upgrade, try different weapon builds
 8. **Return stronger** and conquer
 
 **Death Loop:**
 1. Die on planet
-2. Wake up on ship (keep ship upgrades, mech core stats, synergy codex)
-3. Lose mech loadout (equipped weapons, consumables, modifiers)
-4. Lose 50-75% of collected resources
-5. Fly to trade hub, re-equip mech
-6. Try again (maybe with a different build)
+2. Wake up on ship (keep unlocked weapons, ship tier, synergy codex)
+3. Lose equipped consumables (shield charge, repair kit)
+4. Lose 50% of collected scrap
+5. Re-equip at loadout station, try again (maybe with a different build)
 
 ---
 
@@ -44,52 +47,48 @@
 
 The ship determines WHERE you can go in the universe.
 
-- **Engine tier** - travel range, speed between planets
-- **Fuel capacity** - how far you can go per trip
-- **Hull armor** - survive harsher space environments (radiation, asteroids)
-- **Navigation** - reveal more of the universe map
-- **Life support** - survive extreme planet atmospheres
+- **Ship Tier** — unlocks access to new star systems
+- **Engine upgrade** — travel range, speed between planets
+- **Navigation** — reveal more of the universe map
 
-Upgraded through: trading resources, rare alien blueprints (found on hostile planets), spending credits.
+Upgraded through: spending scrap at the ship shop.
 
 **Ship gates access to universe zones:**
 | Zone | Ship Tier Required |
 |---|---|
 | Inner Systems | Tier 1 (starter) |
 | Mid-Range Systems | Tier 2 |
-| Outer Rim | Tier 3 (warp drive) |
+| Outer Rim | Tier 3 |
 | Deep Space | Tier 4 |
 
-### Layer 2: Mech Core (Permanent, Never Lost)
+### Layer 2: Weapons (Permanent Unlocks)
 
-The mech's permanent identity - only goes up, never reset.
+Once bought, a weapon is unlocked forever. Equip one per mission.
 
-- **Chassis tier** - base frame, determines max slot count
-- **Core stats** - base attack, base shield, base speed
-- **Unlocked ability slots** - expand what the mech CAN equip
-- **Learned abilities** - grapple, drill, hover, scan, etc. (permanent once learned)
-- **Cosmetic upgrades** - paint jobs, visual mods
+| Weapon | Cost | Behavior |
+|---|---|---|
+| Laser | Free (starter) | Rapid-fire, low damage, cyan bolts |
+| Rockets | 150 scrap | Slow, high damage, explosive, orange trails |
+| Plasma | 120 scrap | Medium speed, piercing, purple bolts |
 
-### Layer 3: Mech Loadout (Temporary, Lost on Death)
+More weapons added as universe expands.
 
-What you bolt onto the mech for a specific mission.
+### Layer 3: Consumables (Lost on Death)
 
-- **Equipped weapons** - lasers, rockets, bombs, plasma, EMP
-- **Consumables** - ammo, repair kits, temporary boosts
-- **Modifiers/buffs** - temporary alien tech enhancements
-- **Planet-specific gear** - environmental adaptations
+Single-use items bought before each mission.
 
-### Synergy System (Mech Combos)
+| Consumable | Cost | Effect |
+|---|---|---|
+| Shield Charge | 40 scrap | Absorbs one hit of contact damage |
+| Repair Kit | 50 scrap | Auto-heals when HP drops below 25% |
+
+### Synergy System (Future — Phase 4+)
 
 Equipping compatible components triggers synergy discovery.
 
-- **Discovery-driven** - no recipe list, players discover combos by experimenting
-- **Two-part combos** - common, solid power boost (e.g., laser + bombs = explosive beam)
-- **Three-part combos** - rare, significant power
-- **Four-part combos** - legendary, one per universe region, takes many runs to discover
-- **Codex** - discovered synergies logged permanently, knowledge persists through death
-- **Slot efficiency** - synergized combo occupies fewer slots than individual components
-- **Alien tech wildcards** - hostile planet components synergize with human tech unexpectedly
+- **Discovery-driven** — no recipe list, players discover combos by experimenting
+- **Codex** — discovered synergies logged permanently, knowledge persists through death
+- **Alien tech wildcards** — hostile planet components synergize with human tech unexpectedly
 
 ---
 
@@ -97,198 +96,192 @@ Equipping compatible components triggers synergy discovery.
 
 ### Universe Structure
 
-- Open map viewed from ship (top-down/strategic view)
-- Zones radiate outward from Earth, gated by ship tier
-- Each zone contains multiple star systems with planets to land on
+- Star map viewed from ship cockpit (point-and-click navigation)
+- Star systems organized by tier, gated by ship upgrades
+- Each system contains planets to land on
 
 ### Zone Progression
 
 | Zone | Ship Tier | Difficulty | Flavor |
 |---|---|---|---|
-| **Inner Systems** | Tier 1 (starter) | Easy | Human colonies, friendly aliens, tutorials, basic resources |
-| **Mid-Range Systems** | Tier 2 | Medium | Mixed factions, neutral aliens, some hostile planets, better loot |
-| **Outer Rim** | Tier 3 (warp drive) | Hard | Mostly hostile, rare alien tech, valuable trade goods |
-| **Deep Space** | Tier 4 | Very Hard | Extreme environments, endgame enemies, legendary synergy components |
+| **Inner Systems** | Tier 1 (starter) | Easy | Human outposts, tutorial planets, basic resources |
+| **Mid-Range Systems** | Tier 2 | Medium | Mixed factions, neutral aliens, better loot |
+| **Outer Rim** | Tier 3 | Hard | Mostly hostile, rare alien tech, valuable trade goods |
+| **Deep Space** | Tier 4 | Very Hard | Extreme environments, endgame enemies, legendary gear |
 
 ### Planet Types
 
-| Type | Platforming Challenge | What You Find |
+| Type | Gameplay Challenge | What You Find |
 |---|---|---|
-| **Friendly / Trade Hub** | Environmental traversal, puzzles | Shops, alien traders, intel, side quests |
-| **Neutral / Wild** | Wildlife, terrain hazards, exploration | Resources, hidden caches, mech utility upgrades |
-| **Hostile / Contested** | Enemies + terrain + bosses | Rare weapons, alien blueprints, ship upgrade parts |
+| **Friendly / Trade Hub** | Exploration, NPCs, puzzles | Shops, alien traders, intel, side quests |
+| **Neutral / Wild** | Wildlife, terrain hazards | Resources, hidden caches, upgrades |
+| **Hostile / Contested** | Enemies + hazards + bosses | Rare weapons, alien blueprints, ship parts |
 | **Extreme / Endgame** | Everything at once | Legendary components, synergy pieces, story |
 
 ### Planet Variety
 
-- Procedurally influenced terrain (simplex noise) so planets feel different
-- Biomes: jungle, ice, volcanic, toxic, crystal, void, desert, ocean, etc.
-- Biome affects hazards, enemy types, and available resources
-- Friendly alien visual styles tied to their planet biome
+- Isometric tile-based levels with Godot's built-in tilemap system
+- Biomes: jungle, ice, volcanic, toxic, crystal, void, desert, ocean, cyberpunk, sci-fi interior
+- Biome affects tileset, enemy types, environmental hazards, and lighting/atmosphere
+- Each planet has a unique level layout
 
-### Trading & Economy
+### Current Planets (3 Playable)
 
-- Resources have different values on different planets (buy low, sell high)
-- Establishing trade routes generates passive income
-- Alien faction reputation unlocks better shop inventory and prices
-- Rare materials only found on hostile planets (risk/reward for traders)
+1. **Zeta Station** (Easy) — Sci-fi interior, open layout, introductory enemies
+2. **Crystal Caverns** (Medium) — Alien underground, vertical exploration, phantom enemies
+3. **Neon Outpost** (Hard) — Cyberpunk city, large arena with Boss Warden encounter
 
 ---
 
-## 5. Player & Mech Gameplay
+## 5. Player & Companion Gameplay
 
-### Player Character (Human Explorer)
+### Player Character: Noah
 
-- **Controls:** run, jump, wall-jump, dash, crouch, climb
-- Agile and nimble - movement skill matters
-- No direct combat abilities - the mech handles all offense/defense
-- Can interact with NPCs, shops, terminals, objects
-- Unlocks traversal abilities through mech utility modules
+- **Appearance:** Young explorer in a white & orange astronaut suit, compact round helmet with visor up, brown hair, brown eyes
+- **Movement:** 8-directional isometric movement (WASD)
+- **Actions:** Move, dash (with invincibility frames), interact with objects/NPCs
+- **No direct combat** — B3ANS handles all offense
+- **Can interact with:** NPCs, shops, terminals, objects, stations on the ship
 
-### Mech Companion
+### Mech Companion: B3ANS
 
-- Follows/orbits the player during platforming
-- Operates autonomously based on loadout and context
-- Two primary modes:
+- Floating orb robot with big expressive screen-eyes, cyan glow
+- Follows/orbits Noah during exploration
+- **Operates autonomously** based on equipped weapon
+- Auto-fires at nearest enemy when in range
+- Visual personality: homemade but advanced, retractable utility arms
 
-| Mode | When | Behavior |
-|---|---|---|
-| **Combat** | Hostile enemies detected | Auto-fires weapons, deploys shields, targets threats |
-| **Utility** | Exploration/traversal | Grapple, drill, hover, scan, environmental shield |
+### Combat Feel (Isometric)
 
-### Mech Loadout Slots
-
-| Slot Type | Starting | Max | Examples |
-|---|---|---|---|
-| **Weapon** | 1 | 4 | Laser, rockets, bombs, plasma, EMP |
-| **Defense** | 1 | 3 | Energy shield, armor plating, decoy drone |
-| **Utility** | 1 | 3 | Grapple, drill, hover, scanner, translator |
-| **Passive** | 0 | 2 | Auto-repair, resource magnet, XP boost |
-
-### Combat Feel
-
-- Player dodges, jumps, platforms through danger
-- Mech fires, shields, and reacts alongside you
-- Visual spectacle: laser beams, particle explosions, energy shields
-- Difficulty = platforming skill + mech power level (both matter)
+- Noah dodges and dashes through danger in 8 directions
+- B3ANS auto-targets and fires in the direction of nearest threat
+- Projectiles travel in isometric space
+- Visual spectacle: colored projectile trails, particle explosions, screen shake
+- Difficulty = movement skill (dodging) + loadout power (weapon choice + consumables)
 
 ---
 
 ## 6. Tech Stack
 
-| Layer | Technology | Version | Purpose |
-|---|---|---|---|
-| **Renderer** | PixiJS | v8.16.0 | 2D rendering, WebGPU-ready, shader/filter system |
-| **Language** | TypeScript | 5.9 | Strict mode, type safety |
-| **Bundler** | Vite | 7.3.x | Fast dev server, Rolldown, WASM support |
-| **Physics** | Rapier2D | v0.19.3 (WASM) | Platformer physics, collision detection |
-| **Audio** | Howler.js | 2.2.4 | Sound effects, music |
-| **Level Editor** | LDtk | Latest | Tilemap level design |
-| **Noise/Procgen** | simplex-noise | v4.0.3 | Procedural terrain, planet variation |
+| Layer | Technology | Purpose |
+|---|---|---|
+| **Engine** | Godot 4.6 | Full game engine with built-in physics, tilemaps, animation, particles, audio, UI |
+| **Language** | GDScript | Python-like scripting, native to Godot |
+| **Art Generation** | Gemini API | Character sprites, environment art, props |
+| **Art Rotation** | Scenario AI | 8-direction sprite sheets from single reference |
+| **Art Processing** | Python (art_pipeline.py) | Chroma key removal, trim, slice, mirror |
+| **Tilemap** | Godot TileMap (isometric) | Level layout with isometric tile rendering |
+| **Audio** | Godot AudioStreamPlayer | Sound effects and music |
+| **Particles** | Godot GPUParticles2D | Visual effects (projectile trails, explosions, ambient) |
 
-### Architecture: Entity Component System (ECS)
+### Architecture
 
-- **Entities:** player, mech, enemies, items, projectiles, NPCs
-- **Components:** position, velocity, health, sprite, weapon, AI behavior
-- **Systems:** physics, rendering, combat, input, AI, particles
-- Clean separation of game logic from rendering
+- **Scene-based:** Godot scenes for player, companion, enemies, levels, UI
+- **Autoload singletons:** GameState (scrap, weapons, unlocks), SpriteLoader
+- **Signal-driven:** Godot signals for decoupled game events
+- **Isometric rendering:** Godot's built-in isometric tilemap mode with Y-sort
 
 ### Art Pipeline
 
 | Asset | Source | Tool |
 |---|---|---|
-| Player & mech sprites | AI-generated + asset packs | PixelLab, Aseprite |
-| Enemy & alien sprites | AI-generated + asset packs | PixelLab, itch.io |
-| Tilesets | Asset packs | LDtk for level assembly |
-| Visual effects | Code | PixiJS filters + particle emitters |
-| Backgrounds | Code | Procedural generation, parallax |
-| UI | Code | PixiJS graphics + text |
-| Sound effects | Synth + free packs | ZzFX, jsfxr |
-| Music | Free/licensed tracks | OpenGameArt, itch.io |
-
-### Key Visual Effects (PixiJS Filters)
-
-- **GlowFilter** - mech energy, alien tech, lasers
-- **BloomFilter** - explosions, power-ups, synergy discoveries
-- **ShockwaveFilter** - impacts, boss attacks, planet landings
-- **CRTFilter** - ship computer UI (optional retro feel)
-- **GodrayFilter** - atmospheric planet lighting
-- **ChromaticAberrationFilter** - damage feedback, warp effects
+| Character sprites (8-dir) | AI-generated | Gemini API → Scenario 8-Direction workflow |
+| Enemy sprites (8-dir) | AI-generated | Gemini API → Scenario 8-Direction workflow |
+| Walk/run animations | AI-generated | Gemini API (frame sheets) |
+| Tilesets | AI-generated | Gemini API → Godot TileMap import |
+| Props & decorations | AI-generated | Gemini API |
+| Visual effects | Code | Godot GPUParticles2D + shaders |
+| Backgrounds | AI-generated + code | Gemini API + Godot parallax layers |
+| UI | Code | Godot Control nodes |
+| Sound effects | Free CC0 packs | Kenney Digital SFX |
 
 ---
 
 ## 7. Build Order
 
-### Phase 1: Playable Prototype ✅ COMPLETE (2026-02-08)
-- [x] Project setup (Vite + TypeScript + PixiJS + Rapier2D)
-- [x] Single planet level with platforming (run, jump, wall-jump)
-- [x] Player character with basic movement and animation
-- [x] Mech companion that follows the player
-- [x] Mech auto-attacks with one weapon (laser)
-- [x] A few enemy types that can hurt you (walker, flyer, turret)
-- [x] Death and respawn
-- [ ] Basic tilemap level built in LDtk *(deferred — using procedural level builder for now)*
-- [x] Starfield background (procedural)
-- [x] Glow/bloom shader effects on mech and lasers
-- [x] Sound effects (jump, laser, hit, death) *(SoundManager ready, user needs to generate .wav files via sfxr.me)*
+### Phase 1: Foundation (Godot Setup) — IN PROGRESS
+- [x] Godot project setup (4.6, GDScript, isometric viewport)
+- [x] Player movement (8-directional isometric)
+- [x] B3ANS companion (follow + auto-fire)
+- [x] Basic enemy (walker)
+- [x] Test room level
+- [x] GameState autoload (scrap, weapons, consumables)
+- [x] Art pipeline (Gemini API + chroma key processing)
+- [x] Art style bible and generation workflow
+- [ ] Integrate approved Noah astronaut sprites (8-direction idle)
+- [ ] Integrate Noah walk cycle animations
+- [ ] Proper isometric tilemap for test room
+- [ ] B3ANS sprites
+- [ ] Enemy sprites (walker)
+- [ ] Sound effects integration
+- [ ] HUD (health, scrap counter)
 
-**Gate: Phase 1 must be fun before moving on.**
-**Status:** Core prototype works. Procedural sci-fi visuals in place. LDtk integration deferred to Phase 2. Sound files not yet generated.
+### Phase 2: Core Game Loop
+- [ ] Ship interior scene (walkable room with stations)
+- [ ] Loadout station (weapon selection)
+- [ ] Shop station (buy weapons, consumables)
+- [ ] Star map scene (planet selection)
+- [ ] Scene transitions (ship → star map → planet → ship)
+- [ ] 3 planet levels with unique tilesets and biomes
+- [ ] Death/respawn loop (die → ship → re-equip)
+- [ ] Victory condition per level (clear all enemies)
+- [ ] Scrap collection from defeated enemies
 
-### Phase 2a: Visual & Audio Upgrade ✅ COMPLETE (2026-02-08)
-- [x] Integrate free 32x32 sprite packs (player, mech, enemies, tileset)
-- [x] Add parallax planet backgrounds
-- [x] Add sound effects (free CC0 packs)
-- [x] Asset loading screen
+### Phase 3: Combat Depth
+- [ ] Multiple enemy types (walker, flyer, turret, crawler, shielder, phantom)
+- [ ] Boss encounter (Warden — 3 phases)
+- [ ] 3 weapon types with unique projectile behavior
+- [ ] Consumable effects (shield charge, repair kit)
+- [ ] Screen shake, particles, visual polish
+- [ ] Boss health bar and phase indicators
 
-### Phase 2b: Multiple Planets (partially complete)
-- [x] Scene/state manager (planet-select → gameplay → death → planet-select)
-- [x] 3 planet levels (Zeta Station, Crystal Caverns, Neon Outpost)
-- [x] Planet selection screen
-- [ ] Different biomes/tilesets per planet (deferred to Phase 2b-2)
+### Phase 4: Economy & Progression
+- [ ] Ship tier upgrades (unlock new star systems)
+- [ ] Weapon unlock persistence
+- [ ] Economy balancing (scrap rewards, shop prices)
+- [ ] Planet tier gating
+- [ ] Death penalty (lose 50% scrap, lose consumables)
 
-### Phase 2c: Loadout & Inventory
-- [ ] Mech loadout screen (equip/swap weapons)
-- [ ] Basic inventory and resource collection
-- [ ] Death loop (die → ship → re-equip → retry)
-
-### Phase 2d: Economy & NPCs
-- [ ] One friendly planet with shop/trader NPC
-- [ ] Buy/sell weapons and items
-- [ ] Ship upgrade tier 1 → tier 2
-
-### Phase 2e: Combat Depth
-- [ ] More enemy variety per biome
-- [ ] One boss fight
-- [ ] Mech utility mode (grapple or drill)
-
-### Phase 3: Depth
+### Phase 5: Content & Polish
+- [ ] More planets and biomes
+- [ ] More enemy types per biome
+- [ ] More weapons
 - [ ] Synergy/combo system
-- [ ] Trading economy between planets
-- [ ] Alien factions and reputation
-- [ ] More mech upgrade slots and abilities
-- [ ] Procedural planet variation
-- [ ] Mech chassis tier upgrades
-- [ ] Codex/journal for discovered synergies
-- [ ] More biomes, enemies, bosses
-
-### Phase 4: Polish & Expand
-- [ ] Full universe with all four zones
-- [ ] Complete synergy tree
-- [ ] Music and ambient audio per biome
-- [ ] Ship interior customization
-- [ ] Side quests from friendly aliens
-- [ ] Rare/legendary loot tables
-- [ ] Gamepad support
+- [ ] NPC interactions on friendly planets
+- [ ] Ambient audio per biome
 - [ ] Save system
+- [ ] Gamepad support
 
 ---
 
-## 8. Open Questions (For Later)
+## 8. Characters
+
+### Noah (Player)
+- 12-year-old explorer, messy brown hair, big brown eyes
+- White & orange astronaut suit — slim, lightweight, clean design
+- Compact round helmet with visor up (face visible)
+- Orange stripe on helmet, orange accent panels on suit
+- Utility belt, chunky boots, gloves
+- **Canonical sprite:** `assets/characters/noah/_raw/noah-astro-idle-s-v8.png`
+
+### B3ANS (Companion)
+- Floating orb robot, big expressive screen-eyes
+- Homemade but advanced — cobbled together with love
+- Cyan glow, retractable utility arms
+- Personality: loyal, enthusiastic, slightly glitchy
+
+### Ship Interior
+- Warm, cozy, messy-but-loved
+- Kid's bedroom + workshop + camper van in space
+- Stations: loadout, shop, cockpit (star map)
+
+---
+
+## 9. Open Questions (For Later)
 
 - Game name?
 - Story/narrative beyond "explore the universe"?
 - Multiplayer/co-op potential?
-- Specific boss designs?
-- How many total planets?
+- How many total planets at launch?
 - Endgame content after all zones are unlocked?
+- Mobile/web export?

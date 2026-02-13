@@ -1,0 +1,113 @@
+/**
+ * Level builder – turns a LevelData definition into ECS entities
+ * with static Rapier bodies and PixiJS tiled visuals.
+ *
+ * Each platform becomes an entity with:
+ *   - TransformComponent (centre position in pixels)
+ *   - PhysicsBodyComponent (static Rapier body)
+ *   - SpriteComponent (tiled platform visual)
+ */
+
+import RAPIER from '@dimforge/rapier2d-compat';
+import type { Container } from 'pixi.js';
+import type { World } from '../core/world.js';
+import type { PhysicsContext } from '../core/physics.js';
+import { toPhysicsPos, pixelsToMeters } from '../core/physics.js';
+import { registerCollider } from '../core/collision-utils.js';
+import {
+  createTransform,
+  createPhysicsBody,
+  createSprite,
+} from '../components/index.js';
+import type { LevelData, PlatformDef } from './level-data.js';
+import { renderPlatformTiled } from './tile-renderer.js';
+import { getBiomeConfig } from './biome-config.js';
+import { buildTerrain } from './terrain/terrain-builder.js';
+
+// ---------------------------------------------------------------------------
+// Builder
+// ---------------------------------------------------------------------------
+
+/**
+ * Build all platform entities for a level.
+ *
+ * For each PlatformDef in the level data:
+ *   1. Creates an ECS entity
+ *   2. Creates a Rapier fixed (static) rigid body
+ *   3. Attaches a cuboid collider sized to the platform
+ *   4. Renders a tiled PixiJS visual
+ *   5. Registers the collider for collision lookups
+ *
+ * @param levelData      - the level definition to build
+ * @param world          - the ECS world
+ * @param physicsCtx     - shared physics context
+ * @param worldContainer - PixiJS container for world-space visuals
+ */
+export function buildLevel(
+  levelData: LevelData,
+  world: World,
+  physicsCtx: PhysicsContext,
+  worldContainer: Container,
+): void {
+  // Use new terrain system if terrain def is present
+  if (levelData.terrain) {
+    buildTerrain(
+      levelData.terrain,
+      levelData.width,
+      levelData.height,
+      world,
+      physicsCtx,
+      worldContainer,
+    );
+  }
+
+  // Also build any explicit platforms (can coexist with terrain)
+  const biome = getBiomeConfig(levelData.environmentTheme);
+  for (const platform of levelData.platforms) {
+    buildPlatform(platform, world, physicsCtx, worldContainer, biome.platformTint);
+  }
+}
+
+/**
+ * Create a single platform entity with physics body and tiled visual.
+ *
+ * @param def            - platform definition (position, size, optional colour)
+ * @param world          - the ECS world
+ * @param physicsCtx     - shared physics context
+ * @param worldContainer - PixiJS container for world-space visuals
+ */
+function buildPlatform(
+  def: PlatformDef,
+  world: World,
+  physicsCtx: PhysicsContext,
+  worldContainer: Container,
+  tint: number,
+): void {
+  const entity = world.createEntity();
+
+  // -- Static Rapier body at platform centre --
+  const physPos = toPhysicsPos(def.x, def.y);
+  const bodyDesc = RAPIER.RigidBodyDesc.fixed().setTranslation(
+    physPos.x,
+    physPos.y,
+  );
+  const body = physicsCtx.world.createRigidBody(bodyDesc);
+
+  // Cuboid collider: half-extents in metres
+  const halfW = pixelsToMeters(def.width / 2);
+  const halfH = pixelsToMeters(def.height / 2);
+  const colliderDesc = RAPIER.ColliderDesc.cuboid(halfW, halfH);
+  const collider = physicsCtx.world.createCollider(colliderDesc, body);
+
+  // -- ECS components --
+  world.addComponent(entity, createTransform(def.x, def.y));
+  world.addComponent(entity, createPhysicsBody(body.handle, 'static'));
+
+  // -- Tiled platform visual --
+  const visual = renderPlatformTiled(def.width, def.height, tint);
+  worldContainer.addChild(visual);
+  world.addComponent(entity, createSprite(visual, def.width, def.height));
+
+  // -- Register collider handle -> entity --
+  registerCollider(physicsCtx, collider.handle, entity);
+}

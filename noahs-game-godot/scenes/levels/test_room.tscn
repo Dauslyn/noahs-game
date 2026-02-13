@@ -1,0 +1,72 @@
+[gd_scene load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://scripts/levels/test_room.gd" id="1_level"]
+[ext_resource type="Script" path="res://scripts/levels/hud_updater.gd" id="5_hud"]
+[ext_resource type="PackedScene" path="res://scenes/player/player.tscn" id="2_player"]
+[ext_resource type="PackedScene" path="res://scenes/companion/beans.tscn" id="3_beans"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/walker_enemy.tscn" id="4_walker"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_wall"]
+size = Vector2(640, 16)
+
+[node name="TestRoom" type="Node2D"]
+y_sort_enabled = true
+script = ExtResource("1_level")
+
+[node name="Player" parent="." instance=ExtResource("2_player")]
+position = Vector2(320, 200)
+z_index = 5
+
+[node name="Beans" parent="." instance=ExtResource("3_beans")]
+position = Vector2(360, 200)
+z_index = 5
+
+[node name="Walker1" parent="." instance=ExtResource("4_walker")]
+position = Vector2(100, 80)
+z_index = 5
+
+[node name="Walker2" parent="." instance=ExtResource("4_walker")]
+position = Vector2(500, 120)
+z_index = 5
+
+[node name="Walker3" parent="." instance=ExtResource("4_walker")]
+position = Vector2(300, 320)
+z_index = 5
+
+[node name="Walls" type="StaticBody2D" parent="."]
+collision_layer = 16
+
+[node name="TopWall" type="CollisionShape2D" parent="Walls"]
+position = Vector2(320, -8)
+shape = SubResource("RectangleShape2D_wall")
+
+[node name="BottomWall" type="CollisionShape2D" parent="Walls"]
+position = Vector2(320, 392)
+shape = SubResource("RectangleShape2D_wall")
+
+[node name="LeftWallShape" type="CollisionShape2D" parent="Walls"]
+position = Vector2(-8, 192)
+rotation = 1.5708
+shape = SubResource("RectangleShape2D_wall")
+
+[node name="RightWallShape" type="CollisionShape2D" parent="Walls"]
+position = Vector2(648, 192)
+rotation = 1.5708
+shape = SubResource("RectangleShape2D_wall")
+
+[node name="HUD" type="CanvasLayer" parent="."]
+script = ExtResource("5_hud")
+
+[node name="HPLabel" type="Label" parent="HUD"]
+offset_left = 8.0
+offset_top = 4.0
+offset_right = 120.0
+offset_bottom = 20.0
+text = "HP: 100"
+
+[node name="ScrapLabel" type="Label" parent="HUD"]
+offset_left = 8.0
+offset_top = 20.0
+offset_right = 120.0
+offset_bottom = 36.0
+text = "Scrap: 0"

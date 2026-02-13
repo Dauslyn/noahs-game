@@ -4,57 +4,50 @@ trigger: always_on
 
 # Code Quality Standards
 
-## Type Safety
+## Type Safety (GDScript)
 
-### Every function must have explicit types
+### Every function must have explicit type hints
 
-```typescript
-// Good
-function calculateDamage(attacker: Entity, defender: Entity): number {
-  return Math.max(0, attacker.attack - defender.defense)
-}
+```gdscript
+# Good
+func calculate_damage(attacker: Entity, defender: Entity) -> int:
+    return maxi(0, attacker.attack - defender.defense)
 
-// Bad - implicit any
-function calculateDamage(attacker, defender) {
-  return Math.max(0, attacker.attack - defender.defense)
-}
+# Bad - no type hints
+func calculate_damage(attacker, defender):
+    return max(0, attacker.attack - defender.defense)
 ```
 
-### Use interfaces for game entities and systems
+### Use classes and typed variables for game entities
 
-```typescript
-interface GameEntity {
-  id: string
-  position: Vector2
-  velocity: Vector2
-  health: number
-}
+```gdscript
+class_name GameEntity
+extends Node2D
+
+var health: int = 100
+var velocity: Vector2 = Vector2.ZERO
+var damage: int = 10
 ```
 
 ## Documentation
 
-### Every exported function needs documentation
+### Every public function needs documentation
 
-```typescript
-/**
- * Calculate damage dealt from attacker to defender
- * @param attacker - The attacking entity
- * @param defender - The defending entity
- * @returns Damage value, minimum 0
- */
-export function calculateDamage(attacker: Entity, defender: Entity): number {
-  // ...
-}
+```gdscript
+## Calculate damage dealt from attacker to defender.
+## Returns damage value, minimum 0.
+func calculate_damage(attacker: Entity, defender: Entity) -> int:
+    return maxi(0, attacker.attack - defender.defense)
 ```
 
 ### Complex game math requires inline comments
 
-```typescript
-// Apply gravity: v = v0 + g*dt (Euler integration)
-entity.velocity.y += GRAVITY * deltaTime
+```gdscript
+# Apply gravity: v = v0 + g*dt (Euler integration)
+velocity.y += GRAVITY * delta
 
-// Normalize direction vector to unit length for consistent movement speed
-const direction = vector.normalize(target.sub(position))
+# Normalize direction vector to unit length for consistent movement speed
+var direction := (target - position).normalized()
 ```
 
 ## Performance
@@ -63,7 +56,7 @@ const direction = vector.normalize(target.sub(position))
 
 - Profile expensive operations
 - Use object pooling for frequently created/destroyed objects
-- Batch draw calls where possible
+- Use Godot's built-in systems (TileMap, GPUParticles2D) over manual alternatives
 
 ### Cache frequently accessed data
 
@@ -74,4 +67,4 @@ const direction = vector.normalize(target.sub(position))
 
 - No file should exceed 250 lines
 - Break large systems into logical modules
-- Use barrel files (`index.ts`) for clean imports
+- Keep scenes focused (one scene = one entity/system)

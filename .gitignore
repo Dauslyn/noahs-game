@@ -1,7 +1,7 @@
-# Dependencies
+# Dependencies (PixiJS legacy)
 node_modules/
 
-# Build output
+# Build output (PixiJS legacy)
 dist/
 
 # Environment variables
@@ -27,3 +27,12 @@ yarn-error.log*
 
 # Git worktrees
 .worktrees/
+
+# Godot
+.godot/
+
+# Playwright MCP
+.playwright-mcp/
+
+# Temporary files
+temp-preview/
