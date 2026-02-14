@@ -1,11 +1,14 @@
 ## Player controller for Noah.
-## 8-directional isometric movement with dash/dodge.
+## 8-directional movement with walk, run, and dash/dodge.
 extends CharacterBody2D
 
-## Movement speed in pixels per second.
-@export var move_speed: float = 120.0
+## Walk speed in pixels per second.
+@export var walk_speed: float = 60.0
 
-## Dash burst speed multiplier.
+## Run speed in pixels per second.
+@export var run_speed: float = 120.0
+
+## Dash burst speed multiplier (applied to run speed).
 @export var dash_speed_mult: float = 3.5
 
 ## Duration of a dash in seconds.
@@ -22,6 +25,9 @@ var hp: int = 100
 
 ## Current facing direction as a unit vector.
 var facing: Vector2 = Vector2.DOWN
+
+## Whether run mode is toggled on (Caps Lock style).
+var run_toggled: bool = false
 
 ## Internal dash state.
 var _is_dashing: bool = false
@@ -55,19 +61,37 @@ func _physics_process(delta: float) -> void:
 	_update_animation()
 
 
+## Check if the player is currently running (hold Shift OR toggle).
+func is_running() -> bool:
+	return Input.is_action_pressed("run") or run_toggled
+
+
+## Get the current movement speed based on walk/run state.
+func _get_move_speed() -> float:
+	if is_running():
+		return run_speed
+	return walk_speed
+
+
 ## Read WASD input and compute velocity.
 func _process_movement() -> void:
+	# Toggle run mode with Right Shift
+	if Input.is_action_just_pressed("toggle_run"):
+		run_toggled = not run_toggled
+
 	var input_dir := Input.get_vector(
 		"move_left", "move_right", "move_up", "move_down"
 	)
 
+	var speed := _get_move_speed()
+
 	if input_dir.length_squared() > 0.01:
 		input_dir = input_dir.normalized()
 		facing = input_dir
-		velocity = input_dir * move_speed
+		velocity = input_dir * speed
 	else:
 		velocity = velocity.move_toward(
-			Vector2.ZERO, move_speed * 8.0 * get_physics_process_delta_time()
+			Vector2.ZERO, speed * 8.0 * get_physics_process_delta_time()
 		)
 
 	if Input.is_action_just_pressed("dash") and _dash_cooldown_timer <= 0.0:
@@ -97,7 +121,7 @@ func _start_dash() -> void:
 
 ## Apply dash velocity each frame while dashing.
 func _process_dash() -> void:
-	velocity = _dash_direction * move_speed * dash_speed_mult
+	velocity = _dash_direction * run_speed * dash_speed_mult
 
 
 ## Tick down dash and cooldown timers.
@@ -120,32 +144,39 @@ func _set_invincible(on: bool) -> void:
 		hurtbox.monitorable = not on
 
 
-## Pick the correct animation based on facing direction.
+## Pick the correct animation based on movement state.
+## Idle uses static single-frame, walk/run use looping cycles.
 func _update_animation() -> void:
-	if not sprite:
+	if not sprite or not sprite.sprite_frames:
 		return
 
 	var dir_name := _facing_to_direction_name()
 	var anim_name: String
+	var target_speed := 1.0
 
 	if _is_dashing:
-		anim_name = "walk_" + dir_name
-		sprite.speed_scale = 2.0
+		# Use run animation sped up during dash
+		anim_name = "run_" + dir_name
+		target_speed = 2.0
 	elif velocity.length_squared() > 10.0:
-		anim_name = "walk_" + dir_name
-		sprite.speed_scale = 1.0
+		if is_running():
+			anim_name = "run_" + dir_name
+		else:
+			anim_name = "walk_" + dir_name
 	else:
-		anim_name = "idle_" + dir_name
-		sprite.speed_scale = 1.0
+		anim_name = "static_" + dir_name
 
-	if sprite.sprite_frames and sprite.sprite_frames.has_animation(anim_name):
+	sprite.speed_scale = target_speed
+
+	if sprite.sprite_frames.has_animation(anim_name):
 		if sprite.animation != anim_name:
 			sprite.play(anim_name)
 	else:
-		var static_name := "static_" + dir_name
-		if sprite.sprite_frames and sprite.sprite_frames.has_animation(static_name):
-			if sprite.animation != static_name:
-				sprite.play(static_name)
+		# Fall back to static idle
+		var fallback := "static_" + dir_name
+		if sprite.sprite_frames.has_animation(fallback):
+			if sprite.animation != fallback:
+				sprite.play(fallback)
 
 
 ## Convert facing vector to 8-direction name via angle bucketing.
@@ -174,20 +205,22 @@ func _facing_to_direction_name() -> String:
 
 
 ## Load Noah's sprites into AnimatedSprite2D.
-## Idle sprites: assets/characters/noah/idle/noah-idle-{s,sw,w,...}.png
-## Walk sprites: assets/characters/noah/walk/noah-walk-{s,sw,w,...}.png (when available)
 func _load_sprites() -> void:
-	# Load 8-directional idle as static frames (noah-idle-s.png, noah-idle-sw.png, etc.)
 	var frames := SpriteLoader.load_rotations(
 		"res://assets/characters/noah/idle", "noah-idle"
 	)
-	# Load walk animations if they exist
+
+	# Walk: 12 frames at 10 FPS = 1.2s per cycle (relaxed walk)
 	var walk_dir := "res://assets/characters/noah/walk"
-	SpriteLoader.load_animation_frames(walk_dir, "walk", frames, 8.0)
+	SpriteLoader.load_animation_frames(walk_dir, "walk", frames, 10.0)
+
+	# Run: 12 frames at 16 FPS = 0.75s per cycle (fast sprint)
+	var run_dir := "res://assets/characters/noah/run"
+	SpriteLoader.load_animation_frames(run_dir, "run", frames, 16.0)
+
 	sprite.sprite_frames = frames
-	if frames.has_animation("idle_south"):
-		sprite.play("idle_south")
-	elif frames.has_animation("static_south"):
+
+	if frames.has_animation("static_south"):
 		sprite.play("static_south")
 	elif frames.get_animation_names().size() > 0:
 		sprite.play(frames.get_animation_names()[0])
@@ -208,7 +241,6 @@ func take_damage(amount: int) -> void:
 		return
 
 	hp -= amount
-	# Red flash on damage
 	sprite.modulate = Color.RED
 	var tween := create_tween()
 	tween.tween_property(sprite, "modulate", Color.WHITE, 0.15)
